@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+
+# Environment files (secrets). The example file is safe to commit.
+.env
+.env.*
+!.env.example
+
+# Build output
+dist/
+dev-dist/
+
+# MediaPipe wasm + model are copied/downloaded by `npm install` (postinstall),
+# so they don't need to live in git.
+client/public/mediapipe/
+
+# OS / editor noise
+.DS_Store
+*.log
