@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Monitors digital eye strain with your webcam. Video never leaves your device." />
+    <meta name="theme-color" content="#0f172a" />
+    <link rel="icon" href="/icons/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+    <title>Eye Strain Monitor</title>
+  </head>
+  <body>
+    <header class="top">
+      <h1>Eye Strain Monitor</h1>
+      <span id="status" class="status status-idle">Not started</span>
+    </header>
+
+    <div id="banner" class="banner" hidden></div>
+
+    <main class="grid">
+      <!-- Camera preview with eye landmarks drawn on a canvas on top -->
+      <section class="card video-card">
+        <div class="video-wrap">
+          <video id="video" autoplay playsinline muted></video>
+          <canvas id="overlay"></canvas>
+          <div id="video-placeholder" class="video-placeholder">
+            Camera is off. Video is processed on this device and never uploaded.
+          </div>
+        </div>
+        <div class="controls">
+          <button id="start-btn" class="primary">Start monitoring</button>
+          <button id="recalibrate-btn" disabled>Recalibrate</button>
+          <label class="inline">
+            <input type="checkbox" id="landmarks-toggle" checked />
+            Show eye landmarks
+          </label>
+          <label class="inline">
+            Detection:
+            <select id="mode-select">
+              <option value="worker">Background worker</option>
+              <option value="main">Main thread (control)</option>
+            </select>
+          </label>
+        </div>
+      </section>
+
+      <!-- Live numbers -->
+      <section class="card">
+        <h2>Blinks</h2>
+        <div id="calibration" class="calibration" hidden>
+          <p>Calibrating: look at the screen and blink normally.</p>
+          <progress id="calibration-bar" max="1" value="0"></progress>
+          <p id="calibration-text" class="muted"></p>
+        </div>
+        <dl class="stats">
+          <dt>Total blinks</dt><dd id="blink-total">–</dd>
+          <dt>Blinks / minute</dt><dd id="blink-rate">–</dd>
+          <dt>EAR (avg)</dt><dd id="ear-avg">–</dd>
+          <dt>EAR left / right</dt><dd id="ear-lr">–</dd>
+          <dt>Open-eye baseline</dt><dd id="baseline">–</dd>
+          <dt>Closed / reopen threshold</dt><dd id="thresholds">–</dd>
+          <dt>Brightness</dt><dd id="brightness">–</dd>
+        </dl>
+      </section>
+
+      <!-- EAR graph for tuning thresholds -->
+      <section class="card wide">
+        <h2>Eye aspect ratio (last few seconds)</h2>
+        <canvas id="ear-graph" class="ear-graph"></canvas>
+        <p class="muted legend">
+          <span class="key key-ear"></span> EAR
+          <span class="key key-closed"></span> closed threshold
+          <span class="key key-reopen"></span> reopen threshold
+        </p>
+      </section>
+
+      <!-- Background experiment -->
+      <section class="card wide">
+        <h2>Diagnostics: does detection keep running when hidden?</h2>
+        <dl class="stats compact">
+          <dt>Mode</dt><dd id="diag-mode">–</dd>
+          <dt>Model runs on</dt><dd id="diag-delegate">–</dd>
+          <dt>Processed frames / s</dt><dd id="diag-fps">–</dd>
+        </dl>
+        <p id="diag-summary" class="summary" hidden></p>
+        <table class="log">
+          <thead>
+            <tr><th>Page was</th><th>Duration</th><th>Frames</th><th>Avg fps</th><th>Longest gap</th><th>Blinks</th></tr>
+          </thead>
+          <tbody id="diag-log"></tbody>
+        </table>
+        <div class="controls">
+          <button id="diag-copy">Copy log as JSON</button>
+          <button id="diag-clear">Clear log</button>
+        </div>
+      </section>
+
+      <!-- Notifications -->
+      <section class="card wide">
+        <h2>Notifications</h2>
+        <p>
+          Later, this app will remind you to blink and take eye breaks with desktop
+          notifications, even while you work in other windows. Clicking one brings
+          you back here. Nothing is sent anywhere: notifications are created on your device.
+        </p>
+        <div class="controls">
+          <button id="notify-enable">Enable notifications</button>
+          <button id="notify-test" disabled>Send test notification</button>
+        </div>
+        <p id="notify-status" class="muted"></p>
+      </section>
+    </main>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
