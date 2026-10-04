@@ -13,9 +13,11 @@ import { startMainDetector } from './detector-main.js';
 import { startWorkerDetector, supportsWorkerMode } from './detector-worker.js';
 import { createDiagnostics } from './diagnostics.js';
 import { EarGraph } from './graph.js';
+import { setupNotifications } from './notifications.js';
 
 const graph = new EarGraph(els.graph);
 const diagnostics = createDiagnostics(els);
+setupNotifications(els);
 
 let stream = null;
 let detector = null;
@@ -41,6 +43,8 @@ function handleMessage(msg) {
   switch (msg.type) {
     case 'ready':
       els.diagDelegate.textContent = msg.delegate;
+      // Start the log now, so model-loading time doesn't count as "slow while visible".
+      diagnostics.reset(mode);
       setStatus('Looking for your face…', 'ok');
       break;
     case 'result':

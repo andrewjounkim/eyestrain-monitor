@@ -16,6 +16,9 @@
 
 * { box-sizing: border-box; }
 
+/* Make the `hidden` attribute win over display rules like `display: grid`. */
+[hidden] { display: none !important; }
+
 body {
   margin: 0;
   font-family: system-ui, -apple-system, "Segoe UI", sans-serif;

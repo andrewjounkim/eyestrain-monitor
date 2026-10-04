@@ -30,7 +30,12 @@ export async function createFaceLandmarker({ inWorker }) {
     if (CONFIG.DELEGATE === 'CPU') throw err;
     // GPU (WebGL) can be unavailable, e.g. blocklisted drivers or no WebGL in workers.
     console.warn('GPU delegate failed, falling back to CPU:', err);
-    const landmarker = await FaceLandmarker.createFromOptions(fileset, options('CPU'));
+    // MediaPipe runs its wasm loader script once per attempt and then clears the
+    // global it defined. In a module worker the loader is loaded with import(),
+    // which caches modules and won't run the same URL twice, so the retry needs a
+    // different URL (a query string is enough).
+    const retryFileset = { ...fileset, wasmLoaderPath: `${fileset.wasmLoaderPath}?retry` };
+    const landmarker = await FaceLandmarker.createFromOptions(retryFileset, options('CPU'));
     return { landmarker, delegate: 'CPU' };
   }
 }
