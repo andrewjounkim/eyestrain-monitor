@@ -8,6 +8,7 @@ export const els = {
   video: $('video'),
   overlay: $('overlay'),
   placeholder: $('video-placeholder'),
+  placeholderMsg: $('video-message'),
   startBtn: $('start-btn'),
   recalibrateBtn: $('recalibrate-btn'),
   landmarksToggle: $('landmarks-toggle'),
@@ -78,7 +79,7 @@ export function renderResult(r) {
 }
 
 // Draw the 12 eye points over the video. The lines show exactly what EAR measures:
-// green = the two eyelid-opening heights, blue = the eye width.
+// green = the two eyelid-opening heights, amber = the eye width.
 export function drawEyes(eyePoints) {
   const { overlay, video } = els;
   if (overlay.width !== video.videoWidth || overlay.height !== video.videoHeight) {
@@ -101,10 +102,10 @@ export function drawEyes(eyePoints) {
   ctx.lineWidth = 1.5;
   for (const o of [0, 6]) {
     // o = offset of this eye's first point; p1..p6 are o+0..o+5
-    line(o + 1, o + 5, '#4ade80'); // p2-p6
-    line(o + 2, o + 4, '#4ade80'); // p3-p5
-    line(o + 0, o + 3, '#38bdf8'); // p1-p4
-    ctx.fillStyle = '#fbbf24';
+    line(o + 1, o + 5, '#8fd3b4'); // p2-p6
+    line(o + 2, o + 4, '#8fd3b4'); // p3-p5
+    line(o + 0, o + 3, '#e9bb72'); // p1-p4
+    ctx.fillStyle = '#ece6d9';
     for (let i = o; i < o + 6; i++) {
       const [x, y] = pt(i);
       ctx.fillRect(x - 2, y - 2, 4, 4);

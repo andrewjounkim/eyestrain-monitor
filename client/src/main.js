@@ -90,7 +90,9 @@ els.startBtn.addEventListener('click', async () => {
   try {
     stream = await startCamera(els.video);
   } catch (err) {
-    setStatus(describeCameraError(err), 'error');
+    const message = describeCameraError(err);
+    setStatus(message, 'error');
+    els.placeholderMsg.textContent = message; // also show it where the video would be
     els.startBtn.disabled = false;
     return;
   }
