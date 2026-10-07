@@ -7,20 +7,84 @@
 //     -> both run FaceLandmarker, then frame-processor.js (ear.js + blink.js)
 //     -> 'result' / 'stats' messages -> handleMessage() below -> ui / graph / diagnostics
 import './style.css';
-import { els, setStatus, showBanner, renderResult, drawEyes } from './ui.js';
+import { els, setStatus, showBanner, renderResult, drawEyes, onStatusChange, renderComfort } from './ui.js';
 import { startCamera, describeCameraError } from './camera.js';
 import { startMainDetector } from './detector-main.js';
 import { startWorkerDetector, supportsWorkerMode } from './detector-worker.js';
 import { createDiagnostics } from './diagnostics.js';
 import { EarGraph } from './graph.js';
 import { setupNotifications } from './notifications.js';
+import { SessionStats } from './session.js';
+import { showSummary } from './summary-view.js';
+import { epochNow } from './frame-processor.js';
+import { createWidget, supportsWidget } from './widget.js';
+import { saveSession } from './history.js';
+import { setupHistory } from './history-view.js';
+import { setupIntro } from './intro.js';
+import { setupViews } from './views.js';
+import { ComfortTracker } from './comfort.js';
+
+// Skip the intro when the page was opened by a notification click (?app) or
+// reloaded by an automatic update (flag set just before that reload).
+const params = new URLSearchParams(location.search);
+let skipIntro = params.has('app');
+try {
+  skipIntro ||= sessionStorage.getItem('skipIntroOnce') === '1';
+  sessionStorage.removeItem('skipIntroOnce');
+} catch {
+  // storage blocked: just show the intro
+}
+setupIntro({ skip: skipIntro });
+
+setupViews();
+const comfort = new ComfortTracker();
 
 const graph = new EarGraph(els.graph);
 const diagnostics = createDiagnostics(els);
 setupNotifications(els);
+const history = setupHistory(els);
+
+// APP UPDATES
+// Each build gives files new names (e.g. worker-AB12.js). When a new service
+// worker takes over, it deletes the old build's files from its cache, so a page
+// still running the OLD build can no longer load its old worker file. Reload
+// into the new version right away if nothing is running; otherwise say so.
+if ('serviceWorker' in navigator) {
+  const hadController = Boolean(navigator.serviceWorker.controller); // false on the very first visit
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!hadController) return;
+    if (session || starting) {
+      showBanner('A new version of the app is ready. Reload the page after you end this session.');
+    } else {
+      try {
+        sessionStorage.setItem('skipIntroOnce', '1'); // don't replay the intro for an update
+      } catch {}
+      window.location.reload();
+    }
+  });
+}
+
+// Floating always-on-top widget (Document Picture-in-Picture).
+const widget = createWidget({
+  start: () => startSession(),
+  end: () => endSession(),
+  showSummary: () => lastSummary && !els.summaryDialog.open && showSummary(els, lastSummary),
+});
+onStatusChange((status, statusKind) => widget.update({ status, statusKind }));
+if (supportsWidget()) {
+  els.widgetBtn.addEventListener('click', () =>
+    widget.open().catch((err) => setStatus(`Couldn’t open the widget: ${err.message}`, 'error')),
+  );
+} else {
+  els.widgetBtn.disabled = true;
+  els.widgetBtn.title = 'The floating widget needs Chrome or Edge 116 or newer.';
+}
 
 let stream = null;
 let detector = null;
+let session = null; // SessionStats while a session is running
+let starting = false;
+let lastSummary = null;
 // Remembered so switching detection mode doesn't force a new calibration.
 let lastBaseline = null;
 
@@ -40,6 +104,8 @@ if (!workerSupported) {
 }
 
 function handleMessage(msg) {
+  // Ignore anything still in flight after "End session".
+  if (!session) return;
   switch (msg.type) {
     case 'ready':
       els.diagDelegate.textContent = msg.delegate;
@@ -49,6 +115,29 @@ function handleMessage(msg) {
       break;
     case 'result':
       renderResult(msg);
+      session.onResult(msg);
+      const c = comfort.update(msg, msg.at);
+      const elapsedMs = msg.at - session.startedAt;
+      renderComfort(c, elapsedMs);
+      widget.update({
+        running: true,
+        phase: msg.phase,
+        calibrationProgress: msg.calibrationProgress,
+        perMinute: msg.perMinute,
+        estimate: msg.estimate,
+        total: msg.total,
+        elapsedMs,
+        faceFound: msg.faceFound,
+        // How open the eyes are relative to your calibrated open-eye EAR (0 = shut).
+        openness: msg.faceFound ? Math.min(1.15, msg.ear / (msg.baseline || 0.3)) : 1,
+        gazeX: msg.gazeX ?? 0,
+        gazeY: msg.gazeY ?? 0,
+        headX: msg.headX ?? 0,
+        headY: msg.headY ?? 0,
+        comfortState: c.state,
+        tip: c.tip,
+        distanceCm: c.distanceCm,
+      });
       diagnostics.updateTitle(msg);
       if (msg.baseline) lastBaseline = msg.baseline;
       if (msg.blink) diagnostics.recordBlink(msg.at);
@@ -84,8 +173,12 @@ async function startDetector() {
   detector = mode === 'worker' ? startWorkerDetector(stream, options) : await startMainDetector(els.video, options);
 }
 
-els.startBtn.addEventListener('click', async () => {
+// Start the camera + detection. Called by the Start button and by the widget.
+async function startSession() {
+  if (session || starting) return;
+  starting = true;
   els.startBtn.disabled = true;
+  els.placeholderMsg.textContent = 'Starting camera…';
   setStatus('Starting camera…');
   try {
     stream = await startCamera(els.video);
@@ -94,17 +187,65 @@ els.startBtn.addEventListener('click', async () => {
     setStatus(message, 'error');
     els.placeholderMsg.textContent = message; // also show it where the video would be
     els.startBtn.disabled = false;
+    starting = false;
     return;
   }
   els.placeholder.hidden = true;
-  // e.g. webcam unplugged while running
+  // Fires if the camera is lost (e.g. unplugged). Not fired by our own track.stop().
   stream.getVideoTracks()[0].addEventListener('ended', () => {
-    detector?.stop();
-    setStatus('Camera disconnected. Reconnect it and reload the page.', 'error');
+    endSession();
+    setStatus('Camera disconnected. Reconnect it to start a new session.', 'error');
   });
+  session = new SessionStats(epochNow());
+  starting = false;
+  widget.update({ running: true, phase: 'calibrating', calibrationProgress: 0, summary: null });
   await startDetector();
   els.recalibrateBtn.disabled = false;
-});
+  els.endBtn.disabled = false;
+}
+
+els.startBtn.addEventListener('click', startSession);
+
+// Stop the camera and detection, then show how the session went.
+function endSession() {
+  if (!session) return;
+  const summary = session.summary(epochNow());
+  lastSummary = summary;
+  session = null; // from here on, late messages are ignored (see handleMessage)
+  comfort.reset();
+  renderComfort({ state: 'neutral', tip: 'Session ended. Start a new one any time.', distanceCm: null }, null);
+  widget.update({ running: false, summary, comfortState: 'neutral', tip: 'Session ended.', faceFound: false });
+
+  detector?.stop();
+  detector = null;
+  stream?.getTracks().forEach((track) => track.stop()); // camera light turns off
+  stream = null;
+  els.video.srcObject = null;
+  drawEyes(null);
+
+  els.placeholder.hidden = false;
+  els.placeholderMsg.textContent = 'Session ended';
+  els.startBtn.textContent = 'Start new session';
+  els.startBtn.disabled = false;
+  els.endBtn.disabled = true;
+  els.recalibrateBtn.disabled = true;
+  els.calibration.hidden = true;
+  setStatus('Session ended');
+  document.title = 'Eye Strain Monitor';
+
+  // Only sessions with enough data are worth keeping in the trend.
+  if (summary.rating === 'not-enough-data') {
+    els.summarySaved.textContent = 'Too short to save to your history.';
+  } else {
+    els.summarySaved.textContent = saveSession(summary)
+      ? 'Saved to your history.'
+      : 'Couldn’t save to history (site data is blocked in this browser).';
+    history.refresh();
+  }
+  showSummary(els, summary);
+}
+
+els.endBtn.addEventListener('click', endSession);
 
 els.modeSelect.addEventListener('change', () => {
   mode = els.modeSelect.value;

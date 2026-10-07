@@ -45,7 +45,7 @@ export function setupNotifications(els) {
         icon: '/icons/icon-192.png',
         badge: '/icons/icon-192.png',
         tag: 'test', // same tag replaces the previous notification instead of stacking
-        data: { url: '/' }, // read by the notificationclick handler in sw.js
+        data: { url: '/?app' }, // read by the notificationclick handler in sw.js (?app skips the intro)
       });
       els.notifyStatus.textContent = 'Test sent. Switch to another window, then click it.';
     } catch (err) {

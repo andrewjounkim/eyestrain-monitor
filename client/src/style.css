@@ -202,20 +202,22 @@ input[type='checkbox'] { accent-color: var(--accent); width: 16px; height: 16px;
 .hero {
   display: flex;
   flex-direction: column;
+  min-width: 0;
+  container-type: inline-size; /* lets the number size itself to the card's width */
   padding: 14px 16px;
   border-radius: 14px;
   background: rgb(143 211 180 / 0.06);
   border: 1px solid rgb(143 211 180 / 0.15);
 }
+/* Big numbers never wrap: they shrink with the card instead (cqi = % of card width). */
 .hero-value {
-  font-family: var(--font-display);
-  font-size: 2.2rem;
+  font-size: clamp(1.4rem, 24cqi, 2.2rem);
+  font-weight: 600;
   line-height: 1.1;
-  font-variant-numeric: tabular-nums;
   color: var(--accent);
-  overflow-wrap: anywhere;
+  white-space: nowrap;
 }
-.hero-label { color: var(--muted); font-size: 0.85rem; }
+.hero-label { color: var(--muted); font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 .stats {
   display: grid;
@@ -245,6 +247,9 @@ progress::-moz-progress-bar { background: var(--accent); }
 .ear-graph { width: 100%; height: 170px; display: block; }
 .legend { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 0.85rem; color: var(--muted); margin: 0 0 10px; }
 .key { display: inline-block; width: 16px; height: 3px; border-radius: 2px; margin-left: 10px; }
+.legend-item { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.legend-item .key { margin-left: 0; }
+.legend:has(.legend-item) { gap: 6px 16px; }
 .key-ear { background: var(--ear); }
 .key-closed { background: var(--closed); }
 .key-reopen { background: var(--reopen); }
@@ -275,3 +280,524 @@ progress::-moz-progress-bar { background: var(--accent); }
 .log th, .log td { text-align: right; padding: 8px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; }
 .log th:first-child, .log td:first-child { text-align: left; }
 .log tr.hidden-row td { color: var(--warn); }
+
+/* ---- End session + summary dialog ---- */
+button.end:not(:disabled) { border-color: rgb(236 143 126 / 0.5); color: var(--error); }
+button.end:hover:not(:disabled) { border-color: var(--error); background: rgb(236 143 126 / 0.08); }
+
+.summary-dialog {
+  width: min(680px, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
+  padding: 24px;
+  color: var(--text);
+  background: var(--card-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 24px 60px rgb(0 0 0 / 0.5);
+}
+.summary-dialog::backdrop { background: rgb(6 10 9 / 0.7); backdrop-filter: blur(3px); }
+.summary-dialog h2 { margin: 0; font-size: 1.4rem; }
+.summary-dialog h3 { font-size: 0.95rem; font-weight: 500; margin: 20px 0 8px; }
+.summary-dialog p { margin: 4px 0 0; }
+.summary-head { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px; }
+
+/* Status = icon + label; only the icon badge carries the status color. */
+.verdict { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px 6px 6px; border-radius: 999px; border: 1px solid var(--border); font-weight: 500; }
+.verdict-icon { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; font-size: 0.8rem; font-weight: 700; color: var(--accent-ink); background: var(--muted); }
+.verdict-good .verdict-icon { background: var(--ok); }
+.verdict-fair .verdict-icon { background: var(--warn); }
+.verdict-low .verdict-icon { background: var(--error); }
+
+.tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 18px 0 12px; }
+@media (max-width: 600px) { .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.tile { display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; border-radius: 12px; background: rgb(255 255 255 / 0.03); border: 1px solid var(--border); min-width: 0; }
+.tile-label { font-size: 0.8rem; color: var(--muted); }
+/* Values like "11 min 1 s" may wrap between words, never inside a number or word. */
+.tile { container-type: inline-size; }
+.tile-value { font-size: clamp(1.1rem, 13cqi, 1.5rem); font-weight: 600; line-height: 1.2; }
+
+.summary-chart { position: relative; }
+.summary-chart svg { display: block; width: 100%; height: auto; }
+.history-chart svg { width: auto; max-width: 100%; }
+.summary-chart .grid { stroke: var(--border); stroke-width: 1; }
+.summary-chart .ref { stroke: var(--muted); stroke-width: 1; }
+.summary-chart .tick { fill: var(--muted); font-size: 12px; font-family: var(--font-body); font-variant-numeric: tabular-nums; }
+.summary-chart .bar { fill: var(--accent); }
+.summary-chart .bar-missing { fill: var(--border); }
+.summary-chart .hit { fill: transparent; cursor: default; }
+.summary-chart .hit:hover { fill: rgb(255 255 255 / 0.04); }
+.chart-tooltip {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: min(260px, 100%);
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  font-size: 0.8rem;
+  pointer-events: none;
+  box-shadow: 0 6px 18px rgb(0 0 0 / 0.4);
+}
+.axis-note { font-size: 0.8rem; }
+details { margin-top: 10px; }
+details summary { cursor: pointer; color: var(--muted); font-size: 0.875rem; }
+
+/* ---- Header actions ---- */
+.top-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+
+/* ---- History ---- */
+.link-button { background: none; border: none; padding: 4px 0; color: var(--muted); text-decoration: underline; text-underline-offset: 3px; }
+.link-button:hover:not(:disabled) { color: var(--text); border: none; }
+#history-content .tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 4px; }
+@media (max-width: 600px) { #history-content .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* Trend = icon + words; only the icon carries the good/bad color. */
+.trend { display: flex; align-items: center; gap: 8px; margin: 0 0 12px; }
+.trend-icon { display: grid; place-items: center; flex: none; width: 22px; height: 22px; border-radius: 50%; font-size: 0.7rem; color: var(--accent-ink); background: var(--muted); }
+.trend-up .trend-icon { background: var(--ok); }
+.trend-down .trend-icon { background: var(--warn); }
+
+.key-dot { width: 8px; height: 8px; border-radius: 50%; background: rgb(143 211 180 / 0.45); }
+.key-ref { background: var(--muted); height: 1px; }
+.history-chart .avg-line { fill: none; stroke: var(--accent); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.history-chart .session-dot { fill: rgb(143 211 180 / 0.45); stroke: var(--card); stroke-width: 2; }
+.history-chart .session-dot.active { fill: var(--accent); r: 6; }
+.history-chart .crosshair { stroke: var(--muted); stroke-width: 1; }
+.history-chart .chart-tooltip { white-space: pre-line; max-width: none; }
+
+/* =====================================================================
+   Cinematic intro (see src/intro.js for the sequence)
+   ===================================================================== */
+body.intro-active { overflow: hidden; }
+
+.intro {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 70% 60% at 50% 45%, #15211d 0%, var(--bg) 60%, #070a09 100%);
+  transition: opacity 0.9s ease;
+}
+
+/* Slow, soft glow drifting behind the eye. */
+.intro-aurora {
+  position: absolute;
+  width: 90vmin;
+  height: 90vmin;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, rgb(143 211 180 / 0.22), rgb(233 187 114 / 0.08), rgb(143 211 180 / 0.04), rgb(143 211 180 / 0.22));
+  filter: blur(70px);
+  animation: aurora 18s linear infinite, fade-in 2.5s ease both;
+}
+@keyframes aurora { to { transform: rotate(360deg); } }
+
+/* Film grain: SVG noise tiled over everything, jittered a few times per second. */
+.intro-grain {
+  position: absolute;
+  inset: -50%;
+  opacity: 0.07;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation: grain 0.8s steps(4) infinite;
+}
+@keyframes grain {
+  0% { transform: translate(0, 0); }
+  25% { transform: translate(-3%, 2%); }
+  50% { transform: translate(2%, -3%); }
+  75% { transform: translate(-2%, -1%); }
+}
+
+/* Letterbox bars, which slide away as we zoom in. */
+.intro-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 7vh;
+  background: #050706;
+  transition: transform 0.8s cubic-bezier(0.7, 0, 0.3, 1);
+  z-index: 2;
+}
+.intro-bar-top { top: 0; }
+.intro-bar-bottom { bottom: 0; }
+
+.intro-stage {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(24px, 6vh, 56px);
+  padding: 16px;
+}
+
+/* The eye itself is the button. No padding: its center must be the pupil,
+   because the zoom scales around the center. */
+.intro-eye-button {
+  padding: 0;
+  border: none;
+  background: none;
+  border-radius: 50%;
+  width: min(70vmin, 560px);
+  aspect-ratio: 432 / 240; /* same as the SVG viewBox, so the pupil stays dead center */
+  cursor: pointer;
+  transform-origin: 50% 50%;
+  transition: transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1), filter 0.6s ease;
+  filter: drop-shadow(0 0 24px rgb(143 211 180 / 0.25));
+}
+.intro-eye-button:hover:not(:disabled),
+.intro-eye-button:focus-visible {
+  border: none;
+  transform: scale(1.04);
+  filter: drop-shadow(0 0 40px rgb(143 211 180 / 0.45));
+}
+.intro-eye-button:focus-visible { outline: 2px solid rgb(143 211 180 / 0.6); outline-offset: 8px; border-radius: 24px; }
+.intro-eye { width: 100%; height: 100%; display: block; overflow: visible; }
+
+.eye-outline {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 22;
+  stroke-linejoin: round;
+  stroke-linecap: round; /* hides the seam where the path's start and end meet */
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: draw 1.8s cubic-bezier(0.6, 0, 0.2, 1) 0.2s forwards;
+}
+@keyframes draw { to { stroke-dashoffset: 0; } }
+
+.eye-iris {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform 0.5s cubic-bezier(0.2, 0.7, 0.2, 1);
+  animation: iris-in 1.2s cubic-bezier(0.2, 0.7, 0.2, 1) 1s both;
+}
+@keyframes iris-in {
+  from { opacity: 0; scale: 0.4; }
+  to { opacity: 1; scale: 1; }
+}
+.eye-pupil { fill: var(--bg); }
+
+/* A blink every few seconds: the whole eye squashes shut and opens. */
+.eye-blink {
+  transform-box: view-box;
+  transform-origin: 50% 50%;
+  animation: blink 6s ease-in-out 3.2s infinite;
+}
+@keyframes blink {
+  0%, 90%, 100% { transform: scaleY(1); }
+  93% { transform: scaleY(0.06); }
+  96% { transform: scaleY(1); }
+}
+
+.intro-text { text-align: center; }
+.intro-text > * { animation: rise 1.2s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.intro-kicker {
+  margin: 0;
+  font-size: 0.75rem;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  color: var(--muted);
+  animation-delay: 1.6s !important;
+}
+.intro-begin {
+  margin: 10px 0 6px;
+  padding: 4px 8px;
+  border: none;
+  background: none;
+  border-radius: 8px;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  font-size: clamp(2rem, 6vmin, 3.2rem);
+  letter-spacing: 0.02em;
+  color: var(--text);
+  animation-delay: 1.9s !important;
+  position: relative;
+}
+/* Underline that grows on hover. */
+.intro-begin::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  right: 50%;
+  bottom: 2px;
+  height: 1px;
+  background: var(--accent);
+  transition: left 0.4s ease, right 0.4s ease;
+}
+.intro-begin:hover:not(:disabled) { border: none; background: none; }
+.intro-begin:hover::after,
+.intro-begin:focus-visible::after { left: 15%; right: 15%; }
+.intro-hint { margin: 0; color: var(--muted); font-size: 0.9rem; animation-delay: 2.2s !important; }
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(12px); filter: blur(4px); }
+  to { opacity: 1; transform: none; filter: none; }
+}
+@keyframes fade-in { from { opacity: 0; } }
+
+/* ---- The zoom ---- */
+.intro-zoom .eye-blink { animation: none; }
+.intro-zoom .intro-eye-button {
+  /* Huge scale around the pupil: the dark pupil grows until it fills the screen.
+     !important: must beat the :hover scale, since the mouse is usually still on the eye. */
+  transform: scale(6) !important; /* keep in sync with ZOOM in intro.js */
+  transition: transform 0.9s cubic-bezier(0.5, 0, 0.9, 0.5) !important; /* accelerating */
+  filter: none !important;
+}
+.intro-zoom .intro-text { opacity: 0; transform: translateY(16px); transition: opacity 0.35s ease, transform 0.5s ease; }
+.intro-zoom .intro-text > * { animation: none; }
+.intro-zoom .intro-bar-top { transform: translateY(-100%); }
+.intro-zoom .intro-bar-bottom { transform: translateY(100%); }
+.intro-zoom .intro-aurora { opacity: 0; transition: opacity 0.6s ease; }
+.intro-done { opacity: 0; pointer-events: none; }
+
+.intro-pupil {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  background: var(--bg);
+  visibility: hidden;
+  pointer-events: none;
+}
+/* Stage 1 grows exactly like the zooming pupil (same duration and easing as the
+   eye's transform). Stage 2 then bursts outward until the screen is dark. */
+.intro-zoom .intro-pupil {
+  visibility: visible;
+  animation:
+    pupil-follow 0.9s cubic-bezier(0.5, 0, 0.9, 0.5) forwards,
+    pupil-burst 0.4s cubic-bezier(0.4, 0, 1, 1) 0.9s forwards;
+}
+@keyframes pupil-follow {
+  from { clip-path: circle(var(--pr) at var(--px) var(--py)); }
+  to { clip-path: circle(var(--pr-zoomed) at var(--px) var(--py)); }
+}
+@keyframes pupil-burst {
+  from { clip-path: circle(var(--pr-zoomed) at var(--px) var(--py)); }
+  to { clip-path: circle(150vmax at var(--px) var(--py)); }
+}
+
+/* The app opens out of the pupil: a circle growing from the center of the screen. */
+.app-reveal {
+  position: relative;
+  z-index: 60;
+  animation: app-reveal 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+@keyframes app-reveal {
+  from { clip-path: circle(0 at 50% 50vh); transform: scale(1.06); }
+  to { clip-path: circle(150vmax at 50% 50vh); transform: none; }
+}
+
+/* Reduced motion: no zoom or blinking; a short crossfade instead. */
+.intro-fade { opacity: 0; transition: opacity 0.35s ease; }
+@media (prefers-reduced-motion: reduce) {
+  .intro-aurora, .intro-grain, .eye-blink, .eye-outline, .eye-iris, .intro-text > * { animation: none !important; }
+  .eye-outline { stroke-dashoffset: 0; }
+}
+
+/* =====================================================================
+   App shell: sidebar + one view at a time, sized to the window (no page scroll)
+   ===================================================================== */
+.app {
+  display: grid;
+  grid-template-columns: 216px minmax(0, 1fr);
+  height: 100vh;
+  height: 100dvh;
+  transition: grid-template-columns 0.25s ease;
+}
+.app.collapsed { grid-template-columns: 68px minmax(0, 1fr); }
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 20px 12px;
+  border-right: 1px solid var(--border);
+  background: rgb(0 0 0 / 0.18);
+  min-width: 0;
+  overflow: hidden;
+}
+.side-brand { display: flex; align-items: center; gap: 10px; padding: 0 6px; font-family: var(--font-display); line-height: 1.15; }
+.side-brand img { flex: none; border-radius: 8px; }
+.side-nav, .side-bottom { display: flex; flex-direction: column; gap: 4px; }
+.side-bottom { margin-top: auto; }
+.side-nav a,
+.side-action {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 10px;
+  background: none;
+  color: var(--muted);
+  text-decoration: none;
+  text-align: left;
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+.side-nav a:hover,
+.side-action:hover:not(:disabled) { color: var(--text); background: rgb(255 255 255 / 0.04); border: none; }
+.side-nav a[aria-current='page'] { color: var(--text); background: rgb(143 211 180 / 0.1); box-shadow: inset 2px 0 0 var(--accent); }
+.side-nav svg,
+.side-action svg { flex: none; width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.app.collapsed .side-label { display: none; }
+.app.collapsed .side-collapse svg { transform: rotate(180deg); }
+
+.main-area { display: flex; flex-direction: column; min-width: 0; min-height: 0; overflow: hidden; }
+.topbar { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 18px 24px 10px; }
+.topbar h1 { font-size: 1.5rem; }
+.main-area .banner { margin: 0 24px 10px; max-width: none; }
+
+/* Each view fills the remaining height. If the window is unusually short, the
+   view scrolls rather than hiding anything. */
+.view { flex: 1; min-height: 0; padding: 6px 24px 24px; overflow: auto; }
+
+/* Monitor: camera on the left, numbers on the right. */
+.view-monitor { display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 320px); gap: 18px; }
+.video-card { display: flex; flex-direction: column; min-height: 0; }
+.video-card .video-wrap { flex: 1; min-height: 220px; aspect-ratio: auto; }
+.video-card .controls { margin-top: 14px; }
+.side-stats { display: flex; flex-direction: column; gap: 18px; min-height: 0; overflow: auto; }
+.side-stats .hero-stats { margin: 0; }
+.side-stats .calibration { margin: 0; }
+.comfort-tip { margin: auto 0 0; padding: 12px 14px; border-radius: 12px; background: rgb(255 255 255 / 0.03); border: 1px solid var(--border); }
+
+/* History: tiles on top, chart fills the rest. */
+.view-history { display: flex; flex-direction: column; gap: 14px; }
+.history-content { display: flex; flex-direction: column; gap: 14px; flex: 1; min-height: 0; }
+.history-top .tiles { margin: 0 0 10px; }
+.history-top .trend { margin: 0; }
+.history-chart-card { flex: 1; min-height: 260px; display: flex; flex-direction: column; }
+.history-chart-card .legend { margin: 0; }
+.history-chart { flex: 1; min-height: 0; margin-top: 8px; }
+.history-table { flex: 1; min-height: 0; overflow: auto; margin-top: 8px; }
+.history-table thead th { position: sticky; top: 0; background: var(--card); }
+.history-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.history-foot p { margin: 0; }
+
+/* Tuning */
+.view-tuning { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 18px; align-content: start; }
+.graph-card .ear-graph { height: min(52vh, 420px); }
+
+/* Diagnostics */
+.view-diagnostics { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 18px; align-content: start; }
+.diag-table { max-height: 42vh; overflow: auto; }
+.chip select { padding: 2px 8px; margin-top: 2px; font-size: 0.875rem; }
+
+/* Phones / narrow windows: sidebar becomes a bottom tab bar; views scroll. */
+@media (max-width: 820px) {
+  .app, .app.collapsed { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; }
+  .sidebar { order: 2; flex-direction: row; gap: 0; padding: 4px 8px; border-right: none; border-top: 1px solid var(--border); }
+  .side-brand, .side-collapse { display: none; }
+  .side-nav { flex-direction: row; flex: 1; }
+  .side-bottom { flex-direction: row; margin: 0; }
+  .side-nav a, .side-action { flex-direction: column; gap: 2px; padding: 6px; font-size: 0.7rem; text-align: center; justify-content: center; }
+  .app.collapsed .side-label { display: inline; }
+  .topbar { padding: 14px 16px 8px; }
+  .main-area .banner { margin: 0 16px 8px; }
+  .view { padding: 6px 16px 16px; }
+  .view-monitor, .view-tuning, .view-diagnostics { grid-template-columns: minmax(0, 1fr); align-content: start; }
+  .video-card .video-wrap { flex: none; aspect-ratio: 4 / 3; }
+  .history-chart-card { min-height: 300px; }
+}
+.history-chart { position: relative; overflow: hidden; }
+.history-chart svg { position: absolute; top: 0; left: 0; }
+
+/* =====================================================================
+   Floating widget (copied into the picture-in-picture window; see widget.js)
+   ===================================================================== */
+/* Registering --tint as a color lets the browser animate it, so the
+   background gradient can fade slowly between states. */
+@property --tint {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #8f9c95;
+}
+body.widget-body { margin: 0; height: 100vh; overflow: hidden; background: var(--card); }
+.w {
+  --tint: var(--muted);
+  height: 100vh;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  grid-template-rows: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 4px 14px;
+  padding: 12px 14px 10px;
+  /* Very soft: the state color is mixed in at only 14%. */
+  background: radial-gradient(130% 150% at 25% 45%, color-mix(in srgb, var(--tint) 14%, var(--card)) 0%, var(--card) 72%);
+  transition: --tint 4s ease;
+}
+.w[data-state='good'] { --tint: var(--ok); }
+.w[data-state='fair'] { --tint: var(--warn); }
+.w[data-state='act'] { --tint: var(--error); }
+.w[data-state='neutral'] { --tint: var(--muted); }
+
+.w-eye { width: 100%; max-height: 100%; overflow: visible; transition: opacity 1s ease; }
+.w-outline {
+  fill: none;
+  stroke: color-mix(in srgb, var(--tint) 25%, var(--accent));
+  stroke-width: 22;
+  stroke-linejoin: round;
+}
+.w-pupil { fill: var(--bg); }
+.w-idle .w-eye { opacity: 0.5; }
+
+.w-info { min-width: 0; }
+.w-metric {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  max-width: 100%;
+  padding: 2px 4px;
+  margin-left: -4px;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  text-align: left;
+}
+.w-metric:hover:not(:disabled) { border: none; background: rgb(255 255 255 / 0.04); }
+.w-value { font-size: 2.4rem; font-weight: 600; line-height: 1.05; white-space: nowrap; }
+.w-unit { max-width: 100%; color: var(--muted); font-size: 0.78rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.w-tip {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.w-actions { grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 6px; }
+.w-btn { padding: 3px 12px; font-size: 0.78rem; color: var(--muted); background: rgb(255 255 255 / 0.03); border-color: rgb(255 255 255 / 0.08); }
+.w-btn:hover:not(:disabled) { color: var(--text); }
+/* Very narrow widget: stack the eye above the numbers. */
+@media (max-width: 260px) {
+  .w { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto auto; text-align: center; }
+  .w-metric { align-items: center; margin: 0 auto; }
+  .w-actions { justify-content: center; }
+}
+
+/* Comfort tip on the Monitor view: a small colored dot shows the state. */
+.comfort-tip::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 8px;
+  border-radius: 50%;
+  background: var(--muted);
+  vertical-align: middle;
+  transition: background 2s ease;
+}
+.comfort-tip[data-state='good']::before { background: var(--ok); }
+.comfort-tip[data-state='fair']::before { background: var(--warn); }
+.comfort-tip[data-state='act']::before { background: var(--error); }

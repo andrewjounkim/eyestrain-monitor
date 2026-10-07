@@ -11,6 +11,8 @@ export const els = {
   placeholderMsg: $('video-message'),
   startBtn: $('start-btn'),
   recalibrateBtn: $('recalibrate-btn'),
+  endBtn: $('end-btn'),
+  widgetBtn: $('widget-btn'),
   landmarksToggle: $('landmarks-toggle'),
   modeSelect: $('mode-select'),
   calibration: $('calibration'),
@@ -18,6 +20,13 @@ export const els = {
   calibrationText: $('calibration-text'),
   blinkTotal: $('blink-total'),
   blinkRate: $('blink-rate'),
+  blinkRateLabel: $('blink-rate-label'),
+  distance: $('distance'),
+  sessionTime: $('session-time'),
+  comfortTip: $('comfort-tip'),
+  gaze: $('gaze'),
+  historyTableToggle: $('history-table-toggle'),
+  historyTableWrap: $('history-table-wrap'),
   earAvg: $('ear-avg'),
   earLR: $('ear-lr'),
   baseline: $('baseline'),
@@ -34,12 +43,46 @@ export const els = {
   notifyEnable: $('notify-enable'),
   notifyTest: $('notify-test'),
   notifyStatus: $('notify-status'),
+  summaryDialog: $('summary-dialog'),
+  summaryRange: $('summary-range'),
+  summaryVerdict: $('summary-verdict'),
+  summaryVerdictIcon: $('summary-verdict-icon'),
+  summaryVerdictLabel: $('summary-verdict-label'),
+  summaryRate: $('summary-rate'),
+  summaryBlinks: $('summary-blinks'),
+  summaryFace: $('summary-face'),
+  summaryDuration: $('summary-duration'),
+  summaryTip: $('summary-tip'),
+  summaryChartWrap: $('summary-chart-wrap'),
+  summaryChart: $('summary-chart'),
+  summaryTooltip: $('summary-tooltip'),
+  summaryRefNote: $('summary-ref-note'),
+  summaryTable: $('summary-table'),
+  summaryCopy: $('summary-copy'),
+  summarySaved: $('summary-saved'),
+  historyEmpty: $('history-empty'),
+  historyContent: $('history-content'),
+  historyClear: $('history-clear'),
+  historyCount: $('history-count'),
+  historyRecent: $('history-recent'),
+  historyTime: $('history-time'),
+  historyTrend: $('history-trend'),
+  historyChart: $('history-chart'),
+  historyTooltip: $('history-tooltip'),
+  historyTable: $('history-table'),
+  historyRefNote: $('history-ref-note'),
 };
 
 // kind: 'idle' | 'ok' | 'warn' | 'error'
+let statusListener = null;
+export function onStatusChange(fn) {
+  statusListener = fn;
+}
+
 export function setStatus(text, kind = 'idle') {
   els.status.textContent = text;
   els.status.className = `status status-${kind}`;
+  statusListener?.(text, kind);
 }
 
 export function showBanner(text) {
@@ -61,9 +104,11 @@ export function renderResult(r) {
   els.earAvg.textContent = r.faceFound ? fmt(r.ear) : '–';
   els.earLR.textContent = r.faceFound ? `${fmt(r.earLeft)} / ${fmt(r.earRight)}` : '–';
   els.brightness.textContent = r.brightness == null ? '–' : `${Math.round(r.brightness)} / 255`;
+  els.gaze.textContent = r.faceFound ? `${r.gazeX.toFixed(2)}, ${r.gazeY.toFixed(2)}` : '–';
 
   const calibrating = r.phase === 'calibrating';
   els.calibration.hidden = !calibrating;
+  els.comfortTip.hidden = calibrating; // the calibration box already says what to do
   if (calibrating) {
     els.calibrationBar.value = r.calibrationProgress;
     els.calibrationText.textContent = r.faceFound
@@ -75,7 +120,9 @@ export function renderResult(r) {
   els.thresholds.textContent =
     r.closedThreshold == null ? '–' : `${fmt(r.closedThreshold)} / ${fmt(r.reopenThreshold)}`;
   els.blinkTotal.textContent = calibrating ? '–' : r.total;
-  els.blinkRate.textContent = calibrating ? '–' : `${r.perMinute.toFixed(1)}${r.estimate ? ' (estimate)' : ''}`;
+  // Only the number goes in the big text; qualifiers go in the label below it.
+  els.blinkRate.textContent = calibrating ? '–' : r.perMinute.toFixed(1);
+  els.blinkRateLabel.textContent = !calibrating && r.estimate ? 'blinks / min · est.' : 'blinks / min';
 }
 
 // Draw the 12 eye points over the video. The lines show exactly what EAR measures:
@@ -111,4 +158,21 @@ export function drawEyes(eyePoints) {
       ctx.fillRect(x - 2, y - 2, 4, 4);
     }
   }
+}
+
+export const formatClock = (ms) => {
+  const s = Math.floor(ms / 1000);
+  const h = Math.floor(s / 3600);
+  const mm = String(Math.floor((s % 3600) / 60)).padStart(h ? 2 : 1, '0');
+  const ss = String(s % 60).padStart(2, '0');
+  return h ? `${h}:${mm}:${ss}` : `${mm}:${ss}`;
+};
+
+// Comfort tip + distance + session time on the Monitor view.
+export function renderComfort(comfort, elapsedMs) {
+  if (elapsedMs == null) els.comfortTip.hidden = false;
+  els.comfortTip.textContent = comfort.tip;
+  els.comfortTip.dataset.state = comfort.state;
+  els.distance.textContent = comfort.distanceCm == null ? '–' : `≈ ${Math.round(comfort.distanceCm)} cm`;
+  els.sessionTime.textContent = elapsedMs == null ? '–' : formatClock(elapsedMs);
 }

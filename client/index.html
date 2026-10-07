@@ -10,127 +10,302 @@
     <title>Eye Strain Monitor</title>
   </head>
   <body>
-    <header class="top">
-      <div class="brand">
-        <img src="/icons/icon.svg" alt="" width="36" height="36" />
-        <div>
-          <h1>Eye Strain Monitor</h1>
-          <p class="tagline">Gentle reminders for tired eyes · video stays on your device</p>
+    <!-- Cinematic intro. Click the eye (or Begin) to zoom into the pupil and enter the app. See src/intro.js. -->
+    <div id="intro" class="intro" aria-label="Welcome">
+      <div class="intro-aurora" aria-hidden="true"></div>
+      <div class="intro-grain" aria-hidden="true"></div>
+      <div class="intro-bar intro-bar-top" aria-hidden="true"></div>
+      <div class="intro-bar intro-bar-bottom" aria-hidden="true"></div>
+      <!-- During the zoom this dark circle sits on the pupil and grows to fill the screen. -->
+      <div class="intro-pupil" aria-hidden="true"></div>
+
+      <div class="intro-stage">
+        <button class="intro-eye-button" data-begin aria-label="Begin: enter Eye Strain Monitor">
+          <svg class="intro-eye" viewBox="40 136 432 240" aria-hidden="true">
+            <defs>
+              <!-- The almond shape of the eye; the iris is clipped to it. -->
+              <clipPath id="eye-shape">
+                <path d="M64 256 Q256 80 448 256 Q256 432 64 256 Z" />
+              </clipPath>
+              <radialGradient id="iris-fill" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#cfeee0" />
+                <stop offset="55%" stop-color="#8fd3b4" />
+                <stop offset="100%" stop-color="#3f7d66" />
+              </radialGradient>
+            </defs>
+            <g class="eye-blink">
+              <g clip-path="url(#eye-shape)">
+                <g class="eye-iris">
+                  <circle cx="256" cy="256" r="78" fill="url(#iris-fill)" />
+                  <circle cx="256" cy="256" r="78" fill="none" stroke="#2c5a49" stroke-width="3" opacity="0.6" />
+                  <circle class="eye-pupil" cx="256" cy="256" r="32" />
+                  <circle cx="232" cy="230" r="9" fill="#f4fbf7" opacity="0.85" />
+                </g>
+              </g>
+              <path class="eye-outline" pathLength="1" d="M64 256 Q256 80 448 256 Q256 432 64 256 Z" />
+            </g>
+          </svg>
+        </button>
+
+        <div class="intro-text">
+          <p class="intro-kicker">Eye Strain Monitor</p>
+          <button class="intro-begin" data-begin>Begin</button>
+          <p class="intro-hint">a gentle companion for tired eyes</p>
         </div>
       </div>
-      <span id="status" class="status status-idle">Not started</span>
-    </header>
+    </div>
 
-    <div id="banner" class="banner" hidden></div>
+    <div id="app" class="app">
+      <!-- Sidebar navigation. Collapses to icons; becomes a bottom tab bar on phones. -->
+      <aside class="sidebar">
+        <div class="side-brand">
+          <img src="/icons/icon.svg" alt="" width="32" height="32" />
+          <span class="side-label">Eye Strain<br /><span class="muted">Monitor</span></span>
+        </div>
+        <nav class="side-nav" aria-label="Views">
+          <a href="#monitor" data-view-link="monitor">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+            <span class="side-label">Monitor</span>
+          </a>
+          <a href="#history" data-view-link="history">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18"/><path d="m7 15 4-5 3 3 5-6"/></svg>
+            <span class="side-label">History</span>
+          </a>
+          <a href="#tuning" data-view-link="tuning">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>
+            <span class="side-label">Tuning</span>
+          </a>
+          <a href="#diagnostics" data-view-link="diagnostics">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>
+            <span class="side-label">Diagnostics</span>
+          </a>
+        </nav>
+        <div class="side-bottom">
+          <button id="widget-btn" class="side-action" title="Open a small window that floats on top of your other apps">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><rect x="12" y="12" width="7" height="6" rx="1"/></svg>
+            <span class="side-label">Pop-out widget</span>
+          </button>
+          <button id="sidebar-toggle" class="side-action side-collapse" aria-label="Collapse sidebar" title="Collapse sidebar">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg>
+            <span class="side-label">Collapse</span>
+          </button>
+        </div>
+      </aside>
 
-    <main class="grid">
-      <!-- Camera preview with eye landmarks drawn on a canvas on top -->
-      <section class="card video-card">
-        <div class="video-wrap">
-          <video id="video" autoplay playsinline muted></video>
-          <canvas id="overlay"></canvas>
-          <div id="video-placeholder" class="video-placeholder">
-            <div class="placeholder-inner">
-              <p id="video-message" class="placeholder-title">Your camera is off</p>
-              <p class="muted">Frames are analyzed in this browser and never uploaded.</p>
-              <button id="start-btn" class="primary">Start monitoring</button>
+      <div class="main-area">
+        <header class="topbar">
+          <h1 id="view-title">Monitor</h1>
+          <span id="status" class="status status-idle">Not started</span>
+        </header>
+        <div id="banner" class="banner" hidden></div>
+
+        <!-- MONITOR: everything needed while working, on one screen -->
+        <section class="view view-monitor" data-view="monitor" aria-labelledby="view-title">
+          <div class="card video-card">
+            <div class="video-wrap">
+              <video id="video" autoplay playsinline muted></video>
+              <canvas id="overlay"></canvas>
+              <div id="video-placeholder" class="video-placeholder">
+                <div class="placeholder-inner">
+                  <p id="video-message" class="placeholder-title">Your camera is off</p>
+                  <p class="muted">Frames are analyzed in this browser and never uploaded.</p>
+                  <button id="start-btn" class="primary">Start monitoring</button>
+                </div>
+              </div>
+            </div>
+            <div class="controls">
+              <button id="end-btn" class="end" disabled>End session</button>
+              <button id="recalibrate-btn" disabled>Recalibrate</button>
+              <label class="inline toggle">
+                <input type="checkbox" id="landmarks-toggle" checked />
+                Eye landmarks
+              </label>
             </div>
           </div>
-        </div>
-        <div class="controls">
-          <button id="recalibrate-btn" disabled>Recalibrate</button>
-          <label class="inline toggle">
-            <input type="checkbox" id="landmarks-toggle" checked />
-            Eye landmarks
-          </label>
-          <label class="inline">
-            <span class="muted">Detection</span>
-            <select id="mode-select">
-              <option value="worker">Background worker</option>
-              <option value="main">Main thread (control)</option>
-            </select>
-          </label>
-        </div>
-      </section>
 
-      <!-- Live numbers -->
-      <section class="card">
-        <h2>Blinks</h2>
-        <div class="hero-stats">
-          <div class="hero">
-            <span id="blink-total" class="hero-value">–</span>
-            <span class="hero-label">total</span>
+          <div class="card side-stats">
+            <div class="hero-stats">
+              <div class="hero">
+                <span id="blink-rate" class="hero-value">–</span>
+                <span id="blink-rate-label" class="hero-label">blinks / min</span>
+              </div>
+              <div class="hero">
+                <span id="blink-total" class="hero-value">–</span>
+                <span class="hero-label">blinks</span>
+              </div>
+            </div>
+            <div id="calibration" class="calibration" hidden>
+              <p>Calibrating: look at the screen and blink normally.</p>
+              <progress id="calibration-bar" max="1" value="0"></progress>
+              <p id="calibration-text" class="muted"></p>
+            </div>
+            <dl class="stats">
+              <dt>Distance to screen</dt><dd id="distance">–</dd>
+              <dt>Session time</dt><dd id="session-time">–</dd>
+            </dl>
+            <p id="comfort-tip" class="comfort-tip muted">Start monitoring to see how your eyes are doing.</p>
           </div>
-          <div class="hero">
-            <span id="blink-rate" class="hero-value">–</span>
-            <span class="hero-label">per minute</span>
+        </section>
+
+        <!-- HISTORY: how your sessions have changed -->
+        <section class="view view-history" data-view="history" hidden>
+          <p id="history-empty" class="muted"></p>
+          <div id="history-content" class="history-content" hidden>
+            <div class="history-top">
+              <div class="tiles">
+                <div class="tile"><span class="tile-label">Sessions</span><span id="history-count" class="tile-value">–</span></div>
+                <div class="tile"><span class="tile-label">Recent avg blinks / min</span><span id="history-recent" class="tile-value">–</span></div>
+                <div class="tile"><span class="tile-label">Time monitored</span><span id="history-time" class="tile-value">–</span></div>
+              </div>
+              <p id="history-trend" class="trend"></p>
+            </div>
+            <div class="card history-chart-card">
+              <div class="card-head">
+                <p class="legend">
+                  <span class="legend-item"><span class="key key-dot"></span>each session</span>
+                  <span class="legend-item"><span class="key key-ear"></span>5-session average</span>
+                  <span class="legend-item"><span class="key key-ref"></span>relaxed rate, <span id="history-ref-note"></span></span>
+                </p>
+                <button id="history-table-toggle" class="link-button" aria-expanded="false">Show as table</button>
+              </div>
+              <div id="history-chart" class="summary-chart history-chart">
+                <div id="history-tooltip" class="chart-tooltip" hidden></div>
+              </div>
+              <div id="history-table-wrap" class="table-wrap history-table" hidden>
+                <table class="log">
+                  <thead><tr><th>Started</th><th>Length</th><th>Blinks</th><th>Blinks / min</th><th></th></tr></thead>
+                  <tbody id="history-table"></tbody>
+                </table>
+              </div>
+            </div>
+            <div class="history-foot">
+              <p class="muted axis-note">Saved in this browser only, as numbers (never video).</p>
+              <button id="history-clear" class="link-button">Clear history</button>
+            </div>
           </div>
-        </div>
-        <div id="calibration" class="calibration" hidden>
-          <p>Calibrating: look at the screen and blink normally.</p>
-          <progress id="calibration-bar" max="1" value="0"></progress>
-          <p id="calibration-text" class="muted"></p>
-        </div>
-        <dl class="stats">
-          <dt>EAR (avg)</dt><dd id="ear-avg">–</dd>
-          <dt>EAR left / right</dt><dd id="ear-lr">–</dd>
-          <dt>Open-eye baseline</dt><dd id="baseline">–</dd>
-          <dt>Closed / reopen</dt><dd id="thresholds">–</dd>
-          <dt>Brightness</dt><dd id="brightness">–</dd>
-        </dl>
-      </section>
+        </section>
 
-      <!-- EAR graph for tuning thresholds -->
-      <section class="card wide">
-        <div class="card-head">
-          <h2>Eye aspect ratio</h2>
-          <p class="legend">
-            <span class="key key-ear"></span> EAR
-            <span class="key key-closed"></span> closed
-            <span class="key key-reopen"></span> reopen
-          </p>
-        </div>
-        <canvas id="ear-graph" class="ear-graph"></canvas>
-      </section>
+        <!-- TUNING: raw numbers + EAR graph for adjusting thresholds in config.js -->
+        <section class="view view-tuning" data-view="tuning" hidden>
+          <div class="card graph-card">
+            <div class="card-head">
+              <h2>Eye aspect ratio</h2>
+              <p class="legend">
+                <span class="legend-item"><span class="key key-ear"></span>EAR</span>
+                <span class="legend-item"><span class="key key-closed"></span>closed</span>
+                <span class="legend-item"><span class="key key-reopen"></span>reopen</span>
+              </p>
+            </div>
+            <canvas id="ear-graph" class="ear-graph"></canvas>
+          </div>
+          <div class="card">
+            <h2>Live values</h2>
+            <dl class="stats">
+              <dt>EAR (avg)</dt><dd id="ear-avg">–</dd>
+              <dt>EAR left / right</dt><dd id="ear-lr">–</dd>
+              <dt>Open-eye baseline</dt><dd id="baseline">–</dd>
+              <dt>Closed / reopen</dt><dd id="thresholds">–</dd>
+              <dt>Brightness</dt><dd id="brightness">–</dd>
+              <dt>Gaze (x, y)</dt><dd id="gaze">–</dd>
+            </dl>
+            <p class="muted axis-note">Thresholds live in <code>src/config.js</code>.</p>
+          </div>
+        </section>
 
-      <!-- Background experiment -->
-      <section class="card wide">
-        <h2>Diagnostics <span class="subtle">does detection keep running when hidden?</span></h2>
-        <div class="chips">
-          <div class="chip"><span class="chip-label">Mode</span><span id="diag-mode">–</span></div>
-          <div class="chip"><span class="chip-label">Model runs on</span><span id="diag-delegate">–</span></div>
-          <div class="chip"><span class="chip-label">Frames / s</span><span id="diag-fps">–</span></div>
-        </div>
-        <p id="diag-summary" class="summary" hidden></p>
-        <div class="table-wrap">
-          <table class="log">
-            <thead>
-              <tr><th>Page was</th><th>Duration</th><th>Frames</th><th>Avg fps</th><th>Longest gap</th><th>Blinks</th></tr>
-            </thead>
-            <tbody id="diag-log"></tbody>
-          </table>
-        </div>
-        <div class="controls">
-          <button id="diag-copy">Copy log as JSON</button>
-          <button id="diag-clear">Clear log</button>
-        </div>
-      </section>
+        <!-- DIAGNOSTICS: background experiment + notifications -->
+        <section class="view view-diagnostics" data-view="diagnostics" hidden>
+          <div class="card diag-card">
+            <h2>Background detection <span class="subtle">does it keep running when hidden?</span></h2>
+            <div class="chips">
+              <div class="chip">
+                <span class="chip-label">Mode</span>
+                <select id="mode-select" aria-label="Detection mode">
+                  <option value="worker">Background worker</option>
+                  <option value="main">Main thread (control)</option>
+                </select>
+              </div>
+              <div class="chip"><span class="chip-label">Running as</span><span id="diag-mode">–</span></div>
+              <div class="chip"><span class="chip-label">Model runs on</span><span id="diag-delegate">–</span></div>
+              <div class="chip"><span class="chip-label">Frames / s</span><span id="diag-fps">–</span></div>
+            </div>
+            <p id="diag-summary" class="summary" hidden></p>
+            <div class="table-wrap diag-table">
+              <table class="log">
+                <thead>
+                  <tr><th>Page was</th><th>Duration</th><th>Frames</th><th>Avg fps</th><th>Longest gap</th><th>Blinks</th></tr>
+                </thead>
+                <tbody id="diag-log"></tbody>
+              </table>
+            </div>
+            <div class="controls">
+              <button id="diag-copy">Copy log as JSON</button>
+              <button id="diag-clear">Clear log</button>
+            </div>
+          </div>
+          <div class="card">
+            <h2>Notifications</h2>
+            <p class="prose">
+              Later, this app will remind you to blink and take eye breaks with desktop
+              notifications, even while you work in other windows. Clicking one brings
+              you back here. Nothing is sent anywhere: notifications are created on your device.
+            </p>
+            <div class="controls">
+              <button id="notify-enable" class="primary">Enable notifications</button>
+              <button id="notify-test" disabled>Send test notification</button>
+            </div>
+            <p id="notify-status" class="muted"></p>
+          </div>
+        </section>
+      </div>
+    </div>
 
-      <!-- Notifications -->
-      <section class="card wide">
-        <h2>Notifications</h2>
-        <p class="prose">
-          Later, this app will remind you to blink and take eye breaks with desktop
-          notifications, even while you work in other windows. Clicking one brings
-          you back here. Nothing is sent anywhere: notifications are created on your device.
+    <!-- End-of-session summary. <dialog> + showModal() gives focus trapping, Esc to close and a backdrop for free. -->
+    <dialog id="summary-dialog" class="summary-dialog">
+      <header class="summary-head">
+        <div>
+          <h2>Session summary</h2>
+          <p id="summary-range" class="muted"></p>
+        </div>
+        <p id="summary-verdict" class="verdict">
+          <span id="summary-verdict-icon" class="verdict-icon" aria-hidden="true"></span>
+          <span id="summary-verdict-label"></span>
         </p>
-        <div class="controls">
-          <button id="notify-enable" class="primary">Enable notifications</button>
-          <button id="notify-test" disabled>Send test notification</button>
+      </header>
+
+      <div class="tiles">
+        <div class="tile"><span class="tile-label">Avg blinks / min</span><span id="summary-rate" class="tile-value">–</span></div>
+        <div class="tile"><span class="tile-label">Total blinks</span><span id="summary-blinks" class="tile-value">–</span></div>
+        <div class="tile"><span class="tile-label">Face in view</span><span id="summary-face" class="tile-value">–</span></div>
+        <div class="tile"><span class="tile-label">Session length</span><span id="summary-duration" class="tile-value">–</span></div>
+      </div>
+      <p id="summary-tip" class="prose"></p>
+      <p id="summary-saved" class="muted"></p>
+
+      <div id="summary-chart-wrap">
+        <h3>Blinks per minute over the session</h3>
+        <div id="summary-chart" class="summary-chart">
+          <div id="summary-tooltip" class="chart-tooltip" hidden></div>
         </div>
-        <p id="notify-status" class="muted"></p>
-      </section>
-    </main>
+        <p class="muted axis-note">
+          Minute of the session (after calibration). Horizontal line: relaxed blink rate
+          (<span id="summary-ref-note"></span>). Gray stubs: face not in view.
+        </p>
+        <details>
+          <summary>Show as table</summary>
+          <div class="table-wrap">
+            <table class="log">
+              <thead><tr><th>Period</th><th>Blinks</th><th>Face in view</th><th>Blinks / min</th></tr></thead>
+              <tbody id="summary-table"></tbody>
+            </table>
+          </div>
+        </details>
+      </div>
+
+      <form method="dialog" class="controls">
+        <button id="summary-close" class="primary" value="close">Done</button>
+        <button id="summary-copy" type="button">Copy as JSON</button>
+      </form>
+    </dialog>
 
     <script type="module" src="/src/main.js"></script>
   </body>
