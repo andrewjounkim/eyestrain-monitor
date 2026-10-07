@@ -9,6 +9,7 @@
 
 import { CONFIG } from './config.js';
 import { measureEyes } from './ear.js';
+import { measurePose } from './pose.js';
 import { BlinkDetector } from './blink.js';
 import { averageBrightness } from './lighting.js';
 
@@ -55,7 +56,7 @@ export class FrameProcessor {
 
     if (landmarks) {
       const eyes = measureEyes(landmarks, width, height);
-      Object.assign(message, eyes);
+      Object.assign(message, eyes, measurePose(landmarks, width, height));
       message.blink = this.blink.update(eyes.ear, t);
     } else {
       // No face: report that instead of inventing numbers.
