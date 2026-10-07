@@ -27,9 +27,10 @@ precacheAndRoute(self.__WB_MANIFEST);
 
 // MediaPipe wasm + model: cache the first time they are fetched, then serve from
 // the cache. The files are versioned by the npm package, so they never change in place.
+// ignoreSearch: "loader.js?retry" (see landmarker.js) is served from the same cache entry.
 registerRoute(
   ({ url }) => url.origin === self.location.origin && url.pathname.startsWith('/mediapipe/'),
-  new CacheFirst({ cacheName: 'mediapipe-assets' }),
+  new CacheFirst({ cacheName: 'mediapipe-assets', matchOptions: { ignoreSearch: true } }),
 );
 
 // NOTIFICATION CLICKS

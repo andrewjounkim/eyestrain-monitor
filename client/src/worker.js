@@ -20,6 +20,13 @@ import { FrameProcessor } from './frame-processor.js';
 
 const send = (msg) => self.postMessage(msg);
 
+// Report unexpected errors inside the worker with their real message, instead
+// of the page only seeing a generic "worker error" event.
+self.addEventListener('error', (event) => send({ type: 'error', stage: 'worker', message: event.message }));
+self.addEventListener('unhandledrejection', (event) =>
+  send({ type: 'error', stage: 'worker', message: String(event.reason?.message || event.reason) }),
+);
+
 let processor = null;
 
 self.onmessage = async (event) => {

@@ -35,7 +35,12 @@ export async function createFaceLandmarker({ inWorker }) {
     // which caches modules and won't run the same URL twice, so the retry needs a
     // different URL (a query string is enough).
     const retryFileset = { ...fileset, wasmLoaderPath: `${fileset.wasmLoaderPath}?retry` };
-    const landmarker = await FaceLandmarker.createFromOptions(retryFileset, options('CPU'));
-    return { landmarker, delegate: 'CPU' };
+    try {
+      const landmarker = await FaceLandmarker.createFromOptions(retryFileset, options('CPU'));
+      return { landmarker, delegate: 'CPU' };
+    } catch (cpuErr) {
+      // Report both failures; the GPU one is usually the real cause.
+      throw new Error(`GPU: ${err?.message || err} | CPU: ${cpuErr?.message || cpuErr}`);
+    }
   }
 }

@@ -20,7 +20,14 @@ export function startWorkerDetector(stream, { onMessage, baseline }) {
   const worker = new Worker(new URL('./worker.js', import.meta.url), { type: 'module' });
   worker.onmessage = (event) => onMessage(event.data);
   worker.onerror = (event) => {
-    onMessage({ type: 'error', stage: 'worker', message: event.message || 'Detection worker crashed' });
+    // An error with no message almost always means the worker FILE failed to
+    // load (e.g. the page is from an older build whose worker file was replaced
+    // by an update). Real errors inside the worker are reported by worker.js itself.
+    onMessage({
+      type: 'error',
+      stage: 'worker',
+      message: event.message || 'the detection worker failed to start. Reload the page to load the latest version.',
+    });
   };
 
   // The second argument is the "transfer list": the stream is MOVED to the worker
