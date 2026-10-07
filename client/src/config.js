@@ -48,6 +48,33 @@ export const CONFIG = {
   // Blinks per minute = blinks in this many most recent seconds, scaled to 1 minute.
   BLINK_RATE_WINDOW_SECONDS: 60,
 
+  // ---- Session summary ----
+  // Reference blink rates for the end-of-session summary (blinks per minute).
+  // A relaxed blink rate is roughly 15–20/min; during focused screen work it
+  // often drops to 5–7/min, which dries the eyes. Average at or above HEALTHY
+  // is rated "good", below LOW is rated "low", anything between is "fair".
+  HEALTHY_BLINKS_PER_MIN: 15,
+  LOW_BLINKS_PER_MIN: 10,
+  // A minute is only given a rate in the summary chart if your face was visible
+  // for at least this many seconds of it (otherwise the rate would be noise).
+  SUMMARY_MIN_FACE_SECONDS: 20,
+  // The whole session needs at least this much face-visible time to be rated.
+  SUMMARY_MIN_TOTAL_FACE_SECONDS: 60,
+
+  // ---- Distance & comfort (widget color, tips) ----
+  // Distance is estimated from the size of your iris in the image: almost all
+  // adult irises are about 11.7 mm wide, so the smaller it looks, the farther
+  // away you are. We don't know the webcam's lens, so we assume a typical
+  // horizontal field of view; if distances look off, adjust CAMERA_HFOV_DEG
+  // (a wider lens = larger value). Treat the result as approximate.
+  IRIS_DIAMETER_MM: 11.7,
+  CAMERA_HFOV_DEG: 60,
+  // Closer than this counts as "too close" (recommended: about arm's length, 50–70 cm).
+  DISTANCE_TOO_CLOSE_CM: 45,
+  // A new comfort state must last this long before the widget changes color,
+  // so a glance away or one slow moment never makes it flicker.
+  COMFORT_HOLD_SECONDS: 5,
+
   // ---- Lighting ----
   // Average frame brightness (0 = black, 255 = white) below which we warn that
   // it is too dark for reliable detection.
