@@ -1,0 +1,1 @@
+if('serviceWorker' in navigator) {window.addEventListener('load', () => {navigator.serviceWorker.register('/eyestrain-monitor/sw.js', { scope: '/eyestrain-monitor/' })})}
