@@ -10,7 +10,7 @@ import { CONFIG } from './config.js';
 
 const MESSAGES = {
   blink: 'Blink a few times: slow, full blinks.',
-  distance: 'Lean back a little: about an arm’s length from the screen.',
+  distance: 'Lean back to about arm’s length.',
 };
 
 export class Nudger {
