@@ -12,8 +12,8 @@ CMU 15-113, Project 2 (Creative Web App)
 
 1. **Plan (prompt 1).** One detailed spec: the whole-app vision for context, but only Phase 1 to build: PWA shell, webcam + FaceLandmarker, EAR-based blink counting with calibration, and the main experiment (does detection keep running when the window is hidden?). Claude explored the real MediaPipe package before planning, asked me where to put the project, whether to install Node, and how to handle git, then wrote a plan I approved.
 2. **Phase 1 build.** Scaffold, installable PWA, main-thread detection, calibration and blink counting, then the Web Worker pipeline and diagnostics. Headless tests showed the worker kept processing ~20 fps while hidden, while the main-thread version dropped to 0.
-3. **Getting it running on my machine (prompts 2–3, 5–6).** Server not running, camera "off", model load failure.
-4. **Design and features (prompts 4, 7–15).** New fonts and colors, an End-session summary, a floating widget, the history trend page, a cinematic intro, then a sidebar layout and a live-eye widget.
+3. **Getting it running on my machine (prompts 2, 3, 5, 9).** Server not running, camera "off", model load failure, worker crash after an update.
+4. **Design and features (prompts 4, 6–8, 10–16).** New fonts and colors, an End-session summary, a floating widget, the history trend page, a cinematic intro, a sidebar layout and live-eye widget, then in-widget nudges.
 
 ## Prompts (verbatim)
 
@@ -227,20 +227,12 @@ another thing is that the small popout window is a bit badly designed. what if w
 ### Prompt 15
 
 ```
-suggest me a portion of the code i can change myself for better results to my desires
-```
-
-**Result:** A list of places to change myself: a new widget metric, threshold tuning in `config.js`, tip wording in `comfort.js`, and widget smoothing and tint strength. See the next section.
-
-### Prompt 16
-
-```
 something i realized is that i dont know how the notification thing works and how to get it to work or where it is
 ```
 
 **Result:** Claude explained where the test button is (Diagnostics page), the macOS setting that also has to allow Chrome notifications, and the code path: permission request, then `registration.showNotification()`, then the service worker's `notificationclick` handler focusing the window. It also pointed out that no real alerts existed yet, only the test button.
 
-### Prompt 17
+### Prompt 16
 
 ```
 lets do the nudge but dont make it a notification i realized some people might just have it off lets make it a part of the pop up make it say smth like that and as it does make it change color slightly more red or orange
