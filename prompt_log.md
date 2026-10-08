@@ -232,6 +232,22 @@ suggest me a portion of the code i can change myself for better results to my de
 
 **Result:** A list of places to change myself: a new widget metric, threshold tuning in `config.js`, tip wording in `comfort.js`, and widget smoothing and tint strength. See the next section.
 
+### Prompt 16
+
+```
+something i realized is that i dont know how the notification thing works and how to get it to work or where it is
+```
+
+**Result:** Claude explained where the test button is (Diagnostics page), the macOS setting that also has to allow Chrome notifications, and the code path: permission request, then `registration.showNotification()`, then the service worker's `notificationclick` handler focusing the window. It also pointed out that no real alerts existed yet, only the test button.
+
+### Prompt 17
+
+```
+lets do the nudge but dont make it a notification i realized some people might just have it off lets make it a part of the pop up make it say smth like that and as it does make it change color slightly more red or orange
+```
+
+**Result:** `nudge.js`: if blink rate stays low or I sit too close for 45 s, the widget's tip becomes a short nudge ("Blink a few times: slow, full blinks.") and its tint fades slightly toward orange-red. The Monitor page's tip box does the same. It clears when fixed or after 30 s, then waits 5 minutes before nudging again.
+
 ## Parts of the code I wrote or substantially changed myself
 
 TODO (Andrew): describe your own edits here (what you changed, in which file, and why).
