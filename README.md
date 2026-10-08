@@ -12,52 +12,9 @@
 
 ## What it does
 
-TODO (Andrew, own words): what the app does and who it's for, in a few sentences.
+An installable web app that uses my webcam and an on-device face-tracking model (MediaPipe) to monitor digital eye strain, tracking blink rate, full vs. incomplete blinks, gaze and screen distance, without any video leaving the computer. It keeps detecting in a background Web Worker while the window is hidden, shows a floating widget that mirrors my eyes and gently nudges me to blink or lean back, and charts my sessions over time. The app is really for anyone who uses a computer but mostly people who experience issues with eye strain and headaches and have to sit in front of a screen for long durations a day.
 
 ## How to use it
-
-TODO (Andrew, own words): the steps a first-time user takes, e.g. click the eye, Start monitoring, calibration, the pop-out widget, End session, History.
-
-## Features I'm most proud of
-
-TODO (Andrew, own words): 2–4 features and why. Screenshots you can use are in [docs/screenshots/](docs/screenshots/), e.g.
-
-![Widget nudge sequence](docs/screenshots/widget-nudge-sequence.png)
-
-## How to run it locally
-
-TODO (Andrew, own words): short version. Exact commands are in the AI-generated section at the bottom.
-
-## Secrets
-
-TODO (Andrew, own words): there are no API keys or secrets. Say why (everything runs in the browser, the face model is downloaded from Google's public model storage at build time, and nothing is sent to a server).
-
-## How I used AI
-
-TODO (Andrew, own words): a short summary of how you used AI, plus citations. At minimum:
-- Claude Code (Claude Opus 5.5, Anthropic) wrote a substantial portion of the code.
-- MediaPipe Face Landmarker (`@mediapipe/tasks-vision`, Google) is the face model.
-- Fonts: Fraunces and DM Sans (via Fontsource).
-
-The full prompt history is in [prompt_log.md](prompt_log.md).
-
----
-
-## AI-generated documentation
-
-*Everything below this line was written by Claude (Claude Code, Claude Opus 5.5).*
-
-### Overview
-
-Eye Strain Monitor watches for signs of digital eye strain while you work, using only your webcam and a face-tracking model that runs entirely in the browser. It measures:
-- your blink rate;
-- whether each blink fully closes;
-- where you're looking;
-- roughly how far you sit from the screen.
-
-When habits slip (for example, blinking much less than a relaxed rate), it gives you a calm nudge. No video is ever uploaded or saved: only numbers such as blink counts are stored, in your own browser.
-
-### Using the app
 
 1. Open the site and click the eye (or **Begin**). The view zooms into the pupil and opens the app.
 2. On the **Monitor** page, click **Start monitoring** and allow camera access.
@@ -67,19 +24,15 @@ When habits slip (for example, blinking much less than a relaxed rate), it gives
 6. Click **End session** for a summary with a per-minute chart. Sessions with at least a minute of data are saved to **History**, which charts your trend across sessions.
 7. **Tuning** shows the raw eye measurements for adjusting thresholds in `config.js`. **Diagnostics** shows whether detection keeps running while the window is hidden.
 
-Works best in Chrome or Edge on a computer with a webcam. It can also be installed as an app from Chrome's address bar.
+## Features I'm most proud of
 
-### Highlights
+1. Live-time detection off the page. The app keeps detecting your eye movement while the window is hidden (a background Web Worker, ~20 fps hidden vs. 0 on the main thread). This is important and I am proud of it as having it work in the background was the key factor to making it an actually usable app.
 
-- **Keeps working in the background.** Camera frames stream straight into a Web Worker, which runs the face model there. Browsers pause normal page animation loops when a window is hidden, but the worker keeps going: about 20 fps while hidden in testing, against 0 fps for the main-thread version. The Diagnostics page measures this live.
-- **A widget that mirrors you.** The floating window's eye blinks when you blink and follows your gaze.
-  - Its color changes only after a state lasts a few seconds, and fades slowly, so it isn't distracting.
-  - Nudges ("Blink a few times: slow, full blinks.") appear in the widget itself rather than as system notifications, which many people turn off.
-- **More than a blink counter.** It separates full blinks from incomplete ones and estimates screen distance from the size of your iris (about 11.7 mm for nearly all adults).
-- **History over time.** Each session's average blink rate is plotted with a 5-session moving average, and a headline says whether recent sessions are better or worse than earlier ones.
-- **Cinematic intro.** The eye draws itself, follows the cursor and blinks. Clicking it dives into the pupil, and it turns into a simple fade if your system asks for reduced motion.
+2. Full vs. incomplete blinks. EAR, or eye aspect ratio, is a single number for how open an eye is: the eyelid opening (height) divided by the eye's width. An open eye is tall relative to its width; a closing eye flattens toward a line. Using closed to reopen ratios and modifying them after troubleshooting myself was something I was proud of as I really had to experience the results and tweak them as I went on.
 
-### Run locally
+![Widget nudge sequence](docs/screenshots/widget-nudge-sequence.png)
+
+## How to run it locally
 
 Requires Node.js 20.19+ (or 22+) and Chrome or Edge.
 
@@ -96,16 +49,23 @@ npm run preview  # http://localhost:4173
 If `client/public/mediapipe/` is missing after installing, run `npm run postinstall`.
 Camera access only works on `https://` or `localhost`.
 
-### Deployment
+You can also download it as a desktop app after clicking on the Github page link in order to get the full experience.
 
-The site is hosted on GitHub Pages from the `gh-pages` branch. To publish the current code:
+## Secrets
 
-```bash
-cd client
-npm run deploy   # runs scripts/deploy-pages.sh
-```
+There are no API keys or secrets. Everything runs in the browser or the app if you wish, and the face model is downloaded from Google's public model storage at build time, and nothing is sent to a server ever.
 
-GitHub Pages serves project sites from a subfolder, so the deploy build runs with `BASE_PATH=/eyestrain-monitor/`, and every app URL (MediaPipe files, icons, manifest, service-worker scope) is derived from that base path. Local `npm run dev` / `npm run build` still use `/`.
+## How I used AI
+
+First, I used Claude Opus 5.5 Medium, Anthropic, in order to brainstorm key functions and finalized the idea and asked it to create a prompt for Claude Code to tackle. I then moved on to Claude Code Opus 5.5, Anthropic and it wrote a substantial portion of the code as I consistently asked for modifications as viewable in the prompt log. I furthermore troubleshooted the web app and made code tweaks myself as needed. MediaPipe Face Landmarker (`@mediapipe/tasks-vision`, Google) is the face model. Text styles and font from Fraunces and DM Sans (via Fontsource).
+
+The full prompt history is in [prompt_log.md](prompt_log.md).
+
+---
+
+## AI-generated documentation
+
+*Everything below this line was written by Claude (Claude Code, Claude Opus 5.5).*
 
 ### How data flows
 
