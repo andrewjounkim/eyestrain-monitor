@@ -172,10 +172,13 @@ export const formatClock = (ms) => {
 };
 
 // Comfort tip + distance + session time on the Monitor view.
-export function renderComfort(comfort, elapsedMs) {
+// nudge: a message from nudge.js, shown instead of the normal tip while active.
+export function renderComfort(comfort, elapsedMs, nudge = null) {
   if (elapsedMs == null) els.comfortTip.hidden = false;
-  els.comfortTip.textContent = comfort.tip;
+  const text = nudge || comfort.tip;
+  if (els.comfortTip.textContent !== text) els.comfortTip.textContent = text;
   els.comfortTip.dataset.state = comfort.state;
+  els.comfortTip.classList.toggle('nudging', Boolean(nudge));
   els.distance.textContent = comfort.distanceCm == null ? '–' : `≈ ${Math.round(comfort.distanceCm)} cm`;
   els.sessionTime.textContent = elapsedMs == null ? '–' : formatClock(elapsedMs);
 }

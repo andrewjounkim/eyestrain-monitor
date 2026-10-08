@@ -15,11 +15,11 @@ function rawState(r, distanceCm) {
   if (!r.faceFound) return { state: 'neutral', tip: r.tooDark ? 'Too dark to see your eyes. Add some light in front of you.' : 'Face not in view.' };
   if (r.tooDark) return { state: 'fair', tip: 'Low light: tracking may be unreliable.' };
   if (distanceCm != null && distanceCm < CONFIG.DISTANCE_TOO_CLOSE_CM) {
-    return { state: 'act', tip: 'You’re close to the screen. Lean back a little.' };
+    return { state: 'act', reason: 'distance', tip: 'You’re close to the screen. Lean back a little.' };
   }
   // The first minute's rate is an estimate; don't judge it yet.
   if (!r.estimate && r.perMinute < CONFIG.LOW_BLINKS_PER_MIN) {
-    return { state: 'act', tip: 'Your blink rate is low. Try a few slow, full blinks.' };
+    return { state: 'act', reason: 'blink', tip: 'Your blink rate is low. Try a few slow, full blinks.' };
   }
   if (!r.estimate && r.perMinute < CONFIG.HEALTHY_BLINKS_PER_MIN) {
     return { state: 'fair', tip: 'Blinking a little less than a relaxed rate.' };

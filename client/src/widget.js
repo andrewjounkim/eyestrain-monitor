@@ -14,6 +14,8 @@
 // - One number (click it to switch: blinks/min, total blinks, session time, distance).
 // - A very soft background tint that drifts toward green when things are fine,
 //   amber when your blink rate is a bit low, and muted red when you should act.
+// - Nudges (nudge.js): if a problem lasts, the tip turns into a short nudge
+//   ("Blink a few times…") and the tint warms slightly toward orange-red.
 //   The state is held for a few seconds before changing (comfort.js) and the
 //   color fades over seconds, so it stays calm and out of the way.
 
@@ -143,10 +145,12 @@ export function createWidget(actions) {
     if (!refs) return;
     const s = state;
     refs.root.dataset.state = s.comfortState || 'neutral';
+    // While nudging, the tint shifts a bit further toward orange-red (see style.css).
+    refs.root.classList.toggle('w-nudging', Boolean(s.running && s.nudge));
     const { value, unit } = metricText(s);
     if (refs.value.textContent !== value) refs.value.textContent = value;
     if (refs.unit.textContent !== unit) refs.unit.textContent = unit;
-    const tip = s.running ? s.tip : s.summary ? 'Session ended.' : 'Not running.';
+    const tip = s.running ? s.nudge || s.tip : s.summary ? 'Session ended.' : 'Not running.';
     if (refs.tip.textContent !== tip) refs.tip.textContent = tip;
 
     refs.start.hidden = s.running;

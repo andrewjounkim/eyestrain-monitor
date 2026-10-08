@@ -721,6 +721,12 @@ body.intro-active { overflow: hidden; }
   inherits: true;
   initial-value: #8f9c95;
 }
+/* How strongly the tint shows. Also registered, so it can fade too. */
+@property --tint-amount {
+  syntax: '<percentage>';
+  inherits: true;
+  initial-value: 14%;
+}
 body.widget-body { margin: 0; height: 100vh; overflow: hidden; background: var(--card); }
 .w {
   --tint: var(--muted);
@@ -731,14 +737,18 @@ body.widget-body { margin: 0; height: 100vh; overflow: hidden; background: var(-
   align-items: center;
   gap: 4px 14px;
   padding: 12px 14px 10px;
-  /* Very soft: the state color is mixed in at only 14%. */
-  background: radial-gradient(130% 150% at 25% 45%, color-mix(in srgb, var(--tint) 14%, var(--card)) 0%, var(--card) 72%);
-  transition: --tint 4s ease;
+  /* Very soft: the state color is mixed in at only 14% (24% while nudging). */
+  --tint-amount: 14%;
+  background: radial-gradient(130% 150% at 25% 45%, color-mix(in srgb, var(--tint) var(--tint-amount), var(--card)) 0%, var(--card) 72%);
+  transition: --tint 4s ease, --tint-amount 4s ease;
 }
 .w[data-state='good'] { --tint: var(--ok); }
 .w[data-state='fair'] { --tint: var(--warn); }
 .w[data-state='act'] { --tint: var(--error); }
 .w[data-state='neutral'] { --tint: var(--muted); }
+/* Nudge: warmer (between amber and coral) and a little stronger, still soft. */
+.w.w-nudging { --tint: #ec9a6e; --tint-amount: 24%; }
+.w.w-nudging .w-tip { color: var(--text); }
 
 .w-eye { width: 100%; max-height: 100%; overflow: visible; transition: opacity 1s ease; }
 .w-outline {
@@ -801,3 +811,8 @@ body.widget-body { margin: 0; height: 100vh; overflow: hidden; background: var(-
 .comfort-tip[data-state='good']::before { background: var(--ok); }
 .comfort-tip[data-state='fair']::before { background: var(--warn); }
 .comfort-tip[data-state='act']::before { background: var(--error); }
+
+/* Nudge on the Monitor page: same warm color, as a soft border + brighter text. */
+.comfort-tip { transition: border-color 2s ease, background 2s ease, color 2s ease; }
+.comfort-tip.nudging { color: var(--text); border-color: rgb(236 154 110 / 0.45); background: rgb(236 154 110 / 0.08); }
+.comfort-tip.nudging::before { background: #ec9a6e; }

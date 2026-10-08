@@ -23,6 +23,7 @@ import { setupHistory } from './history-view.js';
 import { setupIntro } from './intro.js';
 import { setupViews } from './views.js';
 import { ComfortTracker } from './comfort.js';
+import { Nudger } from './nudge.js';
 
 // Skip the intro when the page was opened by a notification click (?app) or
 // reloaded by an automatic update (flag set just before that reload).
@@ -38,6 +39,7 @@ setupIntro({ skip: skipIntro });
 
 setupViews();
 const comfort = new ComfortTracker();
+const nudger = new Nudger();
 
 const graph = new EarGraph(els.graph);
 const diagnostics = createDiagnostics(els);
@@ -117,8 +119,9 @@ function handleMessage(msg) {
       renderResult(msg);
       session.onResult(msg);
       const c = comfort.update(msg, msg.at);
+      const nudge = nudger.update(c, msg.at); // message string, or null
       const elapsedMs = msg.at - session.startedAt;
-      renderComfort(c, elapsedMs);
+      renderComfort(c, elapsedMs, nudge);
       widget.update({
         running: true,
         phase: msg.phase,
@@ -136,6 +139,7 @@ function handleMessage(msg) {
         headY: msg.headY ?? 0,
         comfortState: c.state,
         tip: c.tip,
+        nudge,
         distanceCm: c.distanceCm,
       });
       diagnostics.updateTitle(msg);
@@ -213,8 +217,9 @@ function endSession() {
   lastSummary = summary;
   session = null; // from here on, late messages are ignored (see handleMessage)
   comfort.reset();
+  nudger.reset();
   renderComfort({ state: 'neutral', tip: 'Session ended. Start a new one any time.', distanceCm: null }, null);
-  widget.update({ running: false, summary, comfortState: 'neutral', tip: 'Session ended.', faceFound: false });
+  widget.update({ running: false, summary, comfortState: 'neutral', tip: 'Session ended.', nudge: null, faceFound: false });
 
   detector?.stop();
   detector = null;

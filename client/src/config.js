@@ -79,16 +79,19 @@ export const CONFIG = {
   // so a glance away or one slow moment never makes it flicker.
   COMFORT_HOLD_SECONDS: 5,
 
-  // ---- Reminders (alerts.js) ----
-  // 20-20-20 rule: every 20 minutes at the screen, look 20 feet away for 20 seconds.
-  // Counted only while your face is in view.
-  BREAK_INTERVAL_MINUTES: 20,
-  // Nudge ("blink a few times" / "lean back") when the comfort state has been
-  // 'act' for this long, and at most once per cooldown period.
+  // ---- Nudges (nudge.js) ----
+  // A nudge is shown IN the widget and on the Monitor page (not as a system
+  // notification, which many people have turned off). It appears when the
+  // comfort state has been 'act' (blink rate low / too close) for this long...
   NUDGE_AFTER_SECONDS: 45,
+  // ...stays until the problem is fixed or this many seconds pass...
+  NUDGE_MAX_SECONDS: 30,
+  // ...and then waits at least this long before nudging again.
   NUDGE_COOLDOWN_MINUTES: 5,
 
-  // ---- Guided break (break-coach.js) ----
+  // ---- Planned, not used yet: 20-20-20 breaks and the guided break ----
+  // 20-20-20 rule: every 20 minutes at the screen, look 20 feet away for 20 seconds.
+  BREAK_INTERVAL_MINUTES: 20,
   // Step 1: this many FULL blinks, checked by the camera.
   BREAK_BLINKS: 10,
   // Step 2: seconds of looking away from the screen (the timer only runs while
