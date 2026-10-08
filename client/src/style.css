@@ -308,7 +308,7 @@ button.end:hover:not(:disabled) { border-color: var(--error); background: rgb(23
 .verdict-fair .verdict-icon { background: var(--warn); }
 .verdict-low .verdict-icon { background: var(--error); }
 
-.tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 18px 0 12px; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 10px; margin: 18px 0 12px; }
 @media (max-width: 600px) { .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .tile { display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; border-radius: 12px; background: rgb(255 255 255 / 0.03); border: 1px solid var(--border); min-width: 0; }
 .tile-label { font-size: 0.8rem; color: var(--muted); }

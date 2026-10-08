@@ -144,6 +144,7 @@ export function showSummary(els, s) {
   els.summaryBlinks.textContent = s.totalBlinks;
   els.summaryRate.textContent = s.blinksPerMinute == null ? '–' : s.blinksPerMinute.toFixed(1);
   els.summaryFace.textContent = formatDuration(s.faceSeconds);
+  els.summaryFull.textContent = s.fullBlinkPercent == null ? '–' : `${s.fullBlinkPercent}%`;
   els.summaryVerdict.className = `verdict verdict-${s.rating}`;
   els.summaryVerdictIcon.textContent = rating.icon;
   els.summaryVerdictLabel.textContent = rating.label;

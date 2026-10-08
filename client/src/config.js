@@ -45,6 +45,10 @@ export const CONFIG = {
   // A closure longer than this is not a blink (eyes deliberately closed, or
   // looking down at a keyboard). Normal blinks last roughly 100–400 ms.
   MAX_BLINK_MS: 700,
+  // A blink counts as FULL if, at its lowest point, EAR fell to this fraction of
+  // your open-eye baseline or below (e.g. baseline 0.30 x 0.4 = 0.12).
+  // Blinks that only reach the closed threshold but not this one are "incomplete".
+  FULL_BLINK_RATIO: 0.4,
   // Blinks per minute = blinks in this many most recent seconds, scaled to 1 minute.
   BLINK_RATE_WINDOW_SECONDS: 60,
 
@@ -74,6 +78,22 @@ export const CONFIG = {
   // A new comfort state must last this long before the widget changes color,
   // so a glance away or one slow moment never makes it flicker.
   COMFORT_HOLD_SECONDS: 5,
+
+  // ---- Reminders (alerts.js) ----
+  // 20-20-20 rule: every 20 minutes at the screen, look 20 feet away for 20 seconds.
+  // Counted only while your face is in view.
+  BREAK_INTERVAL_MINUTES: 20,
+  // Nudge ("blink a few times" / "lean back") when the comfort state has been
+  // 'act' for this long, and at most once per cooldown period.
+  NUDGE_AFTER_SECONDS: 45,
+  NUDGE_COOLDOWN_MINUTES: 5,
+
+  // ---- Guided break (break-coach.js) ----
+  // Step 1: this many FULL blinks, checked by the camera.
+  BREAK_BLINKS: 10,
+  // Step 2: seconds of looking away from the screen (the timer only runs while
+  // the camera sees you looking away).
+  BREAK_LOOK_AWAY_SECONDS: 20,
 
   // ---- Lighting ----
   // Average frame brightness (0 = black, 255 = white) below which we warn that

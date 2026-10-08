@@ -39,6 +39,8 @@ export class BlinkDetector {
     this.eyeClosed = false;
     this.closedSince = 0;
     this.total = 0;
+    this.fullTotal = 0;
+    this.minEar = 0;
     this.blinkTimes = [];
     this.monitoringSince = null;
   }
@@ -62,7 +64,11 @@ export class BlinkDetector {
   }
 
   // Process one frame. `now` is in milliseconds. Returns a blink object
-  // { durationMs } when a blink just finished, otherwise null.
+  // { durationMs, depth, full } when a blink just finished, otherwise null.
+  //   depth = lowest EAR during the blink as a fraction of your open-eye
+  //           baseline (0 = fully shut, 1 = not closed at all)
+  //   full  = the eye closed all the way (depth <= FULL_BLINK_RATIO).
+  //           Incomplete blinks don't spread tears across the whole eye.
   update(ear, now) {
     const gap = this.lastTime === null ? 0 : now - this.lastTime;
     this.lastTime = now;
@@ -76,14 +82,20 @@ export class BlinkDetector {
     if (!this.eyeClosed && ear < this.closedThreshold) {
       this.eyeClosed = true;
       this.closedSince = now;
+      this.minEar = ear;
     } else if (this.eyeClosed && ear > this.reopenThreshold) {
       this.eyeClosed = false;
       const durationMs = now - this.closedSince;
       if (durationMs >= this.config.MIN_BLINK_MS && durationMs <= this.config.MAX_BLINK_MS) {
+        const depth = this.minEar / this.baseline;
+        const full = depth <= this.config.FULL_BLINK_RATIO;
         this.total += 1;
+        if (full) this.fullTotal += 1;
         this.blinkTimes.push(now);
-        return { durationMs };
+        return { durationMs, depth, full };
       }
+    } else if (this.eyeClosed) {
+      this.minEar = Math.min(this.minEar, ear);
     }
     return null;
   }
@@ -125,6 +137,7 @@ export class BlinkDetector {
       closedThreshold: this.closedThreshold,
       reopenThreshold: this.reopenThreshold,
       total: this.total,
+      fullTotal: this.fullTotal,
       ...this.blinksPerMinute(now),
     };
   }

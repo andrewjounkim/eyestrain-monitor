@@ -16,6 +16,8 @@ export class SessionStats {
     this.lastAt = null;
     this.faceMs = 0;
     this.totalBlinks = 0;
+    this.fullBlinks = 0;
+    this.breaksTaken = 0;
     this.minutes = []; // [{ blinks, faceMs }] one entry per minute of monitoring
   }
 
@@ -33,6 +35,7 @@ export class SessionStats {
     }
     if (r.blink) {
       this.totalBlinks += 1;
+      if (r.blink.full) this.fullBlinks += 1;
       minute.blinks += 1;
     }
   }
@@ -41,6 +44,10 @@ export class SessionStats {
     const index = Math.floor((at - this.monitoringStart) / 60000);
     while (this.minutes.length <= index) this.minutes.push({ blinks: 0, faceMs: 0 });
     return this.minutes[index];
+  }
+
+  recordBreak() {
+    this.breaksTaken += 1;
   }
 
   summary(endedAt) {
@@ -62,6 +69,9 @@ export class SessionStats {
       durationSeconds: (endedAt - this.startedAt) / 1000,
       faceSeconds,
       totalBlinks: this.totalBlinks,
+      // Share of blinks that closed all the way (null if there were no blinks).
+      fullBlinkPercent: this.totalBlinks ? Math.round((this.fullBlinks / this.totalBlinks) * 100) : null,
+      breaksTaken: this.breaksTaken,
       blinksPerMinute,
       rating,
       minutes: this.minutes.map((m) => ({ blinks: m.blinks, faceSeconds: m.faceMs / 1000 })),

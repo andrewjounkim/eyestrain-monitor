@@ -22,6 +22,8 @@ export const els = {
   blinkRate: $('blink-rate'),
   blinkRateLabel: $('blink-rate-label'),
   distance: $('distance'),
+  fullBlinks: $('full-blinks'),
+  summaryFull: $('summary-full'),
   sessionTime: $('session-time'),
   comfortTip: $('comfort-tip'),
   gaze: $('gaze'),
@@ -120,6 +122,7 @@ export function renderResult(r) {
   els.thresholds.textContent =
     r.closedThreshold == null ? '–' : `${fmt(r.closedThreshold)} / ${fmt(r.reopenThreshold)}`;
   els.blinkTotal.textContent = calibrating ? '–' : r.total;
+  els.fullBlinks.textContent = calibrating || !r.total ? '–' : `${Math.round((r.fullTotal / r.total) * 100)}%`;
   // Only the number goes in the big text; qualifiers go in the label below it.
   els.blinkRate.textContent = calibrating ? '–' : r.perMinute.toFixed(1);
   els.blinkRateLabel.textContent = !calibrating && r.estimate ? 'blinks / min · est.' : 'blinks / min';
