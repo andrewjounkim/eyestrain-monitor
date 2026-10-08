@@ -28,8 +28,11 @@ precacheAndRoute(self.__WB_MANIFEST);
 // MediaPipe wasm + model: cache the first time they are fetched, then serve from
 // the cache. The files are versioned by the npm package, so they never change in place.
 // ignoreSearch: "loader.js?retry" (see landmarker.js) is served from the same cache entry.
+// Paths are relative to the service worker's scope, which is the app's folder
+// ("/" locally, "/eyestrain-monitor/" on GitHub Pages).
+const MEDIAPIPE_URL = new URL('mediapipe/', self.registration.scope).href;
 registerRoute(
-  ({ url }) => url.origin === self.location.origin && url.pathname.startsWith('/mediapipe/'),
+  ({ url }) => url.href.startsWith(MEDIAPIPE_URL),
   new CacheFirst({ cacheName: 'mediapipe-assets', matchOptions: { ignoreSearch: true } }),
 );
 
@@ -40,13 +43,13 @@ registerRoute(
 // minimized. We focus an existing app window if one is open, otherwise open one.
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const targetUrl = new URL(event.notification.data?.url || '/', self.location.origin).href;
+  const targetUrl = new URL(event.notification.data?.url || './', self.registration.scope).href;
 
   // waitUntil keeps the service worker alive until focusing finishes.
   event.waitUntil(
     (async () => {
       const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-      const appWindow = windows.find((client) => new URL(client.url).origin === self.location.origin);
+      const appWindow = windows.find((client) => client.url.startsWith(self.registration.scope));
 
       if (appWindow) {
         await appWindow.focus();

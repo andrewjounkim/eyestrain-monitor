@@ -1,6 +1,10 @@
 // Every tunable number in one place. Change these while watching the EAR graph.
 // This file has no DOM code, so both the page and the Web Worker import it.
 
+// The folder the app is served from ("/" locally, "/eyestrain-monitor/" on
+// GitHub Pages). Vite fills in import.meta.env.BASE_URL at build time.
+const BASE = import.meta.env?.BASE_URL ?? '/';
+
 export const CONFIG = {
   // ---- Camera ----
   // Requested resolution / frame rate. The browser picks the closest the camera
@@ -11,8 +15,8 @@ export const CONFIG = {
 
   // ---- Face model (MediaPipe FaceLandmarker) ----
   // Files are served from /public/mediapipe (copied there by `npm install`).
-  WASM_PATH: '/mediapipe/wasm',
-  MODEL_PATH: '/mediapipe/face_landmarker.task',
+  WASM_PATH: `${BASE}mediapipe/wasm`,
+  MODEL_PATH: `${BASE}mediapipe/face_landmarker.task`,
   // 'GPU' runs the model with WebGL (faster). If that fails we fall back to 'CPU'.
   DELEGATE: 'GPU',
   // How sure the model must be (0–1) that it found / is still tracking a face.

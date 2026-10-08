@@ -1,7 +1,14 @@
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
+// Where the app is served from. Locally it's the site root ("/"); the GitHub
+// Pages build (see .github/workflows/deploy.yml) sets BASE_PATH=/eyestrain-monitor/
+// because Pages serves project sites from a subfolder.
+const base = process.env.BASE_PATH || '/';
+
 export default defineConfig({
+  base,
+
   // Build the detection Web Worker (src/worker.js) as an ES module so it can use
   // `import` like the rest of the app.
   worker: { format: 'es' },
@@ -33,16 +40,16 @@ export default defineConfig({
         name: 'Eye Strain Monitor',
         short_name: 'Eye Strain',
         description: 'Monitors blink rate and eye strain with your webcam. Video never leaves your device.',
-        start_url: '/',
-        scope: '/',
+        start_url: base,
+        scope: base,
         display: 'standalone', // own window, no browser address bar
         background_color: '#101614',
         theme_color: '#101614',
         icons: [
-          { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
-          { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
+          { src: 'icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+          { src: 'icons/icon-512.png', sizes: '512x512', type: 'image/png' },
           // "maskable" icons fill the whole square; the OS crops them to its own shape.
-          { src: '/icons/icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+          { src: 'icons/icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
       },
 

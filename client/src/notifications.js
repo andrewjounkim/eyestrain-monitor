@@ -42,10 +42,10 @@ export function setupNotifications(els) {
       // and isn't allowed at all in some contexts (e.g. Android).
       await registration.showNotification('Time for a quick eye break', {
         body: 'Test notification. Click to return to Eye Strain Monitor.',
-        icon: '/icons/icon-192.png',
-        badge: '/icons/icon-192.png',
+        icon: `${import.meta.env.BASE_URL}icons/icon-192.png`,
+        badge: `${import.meta.env.BASE_URL}icons/icon-192.png`,
         tag: 'test', // same tag replaces the previous notification instead of stacking
-        data: { url: '/?app' }, // read by the notificationclick handler in sw.js (?app skips the intro)
+        data: { url: './?app' }, // resolved against the app's folder in sw.js (?app skips the intro)
       });
       els.notifyStatus.textContent = 'Test sent. Switch to another window, then click it.';
     } catch (err) {

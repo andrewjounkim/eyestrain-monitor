@@ -8,6 +8,7 @@ node_modules/
 
 # Build output
 dist/
+dist-pages/
 dev-dist/
 
 # MediaPipe wasm + model are copied/downloaded by `npm install` (postinstall),
