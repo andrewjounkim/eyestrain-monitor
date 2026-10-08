@@ -66,7 +66,14 @@ Camera access only works on `https://` or `localhost`.
 
 ### Deployment
 
-`.github/workflows/deploy.yml` builds the app on every push to `main` and publishes `client/dist` to GitHub Pages. GitHub Pages serves project sites from a subfolder, so the build runs with `BASE_PATH=/eyestrain-monitor/`, and every app URL (MediaPipe files, icons, manifest, service-worker scope) is derived from that base path.
+The site is hosted on GitHub Pages from the `gh-pages` branch. To publish the current code:
+
+```bash
+cd client
+npm run deploy   # runs scripts/deploy-pages.sh
+```
+
+GitHub Pages serves project sites from a subfolder, so the deploy build runs with `BASE_PATH=/eyestrain-monitor/`, and every app URL (MediaPipe files, icons, manifest, service-worker scope) is derived from that base path. Local `npm run dev` / `npm run build` still use `/`.
 
 ### How data flows
 
