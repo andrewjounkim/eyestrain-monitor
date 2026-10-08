@@ -242,7 +242,7 @@ lets do the nudge but dont make it a notification i realized some people might j
 
 ## Parts of the code I wrote or substantially changed myself
 
-TODO (Andrew): describe your own edits here (what you changed, in which file, and why).
+I tuned blink detection and restyled the widget myself. In client/src/config.js I changed CLOSED_RATIO from 0.6 to 0.65 and REOPEN_RATIO from 0.7 to 0.8, after watching my own blinks on the app's live EAR graph (Tuning page) and seeing that some normal blinks weren't dipping below the closed line. These ratios are multiplied by my calibrated open-eye EAR in blink.js to make two thresholds. The eye counts as closed below the first and reopened above the second, the gap between them stops noise from counting one blink twice. I also changed the widget's colors in client/src/style.css: the --tint colors for the good/fair/act states and the nudge tint amount], because the red felt too alarming while users are meant to focus on their work in the background. The widget sets a data-state attribute, the CSS maps it to a --tint color that's mixed into the background gradient, and because --tint is registered with @property, the browser can fade it slowly instead of snapping.
 
 ## One place AI got it wrong
 
