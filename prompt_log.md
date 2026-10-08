@@ -246,7 +246,7 @@ something i realized is that i dont know how the notification thing works and ho
 lets do the nudge but dont make it a notification i realized some people might just have it off lets make it a part of the pop up make it say smth like that and as it does make it change color slightly more red or orange
 ```
 
-**Result:** `nudge.js`: if blink rate stays low or I sit too close for 45 s, the widget's tip becomes a short nudge ("Blink a few times: slow, full blinks.") and its tint fades slightly toward orange-red. The Monitor page's tip box does the same. It clears when fixed or after 30 s, then waits 5 minutes before nudging again.
+**Result:** `nudge.js`: if blink rate stays low or I sit too close for 45 s, the widget's tip becomes a short nudge ("Blink a few times: slow, full blinks." or "Lean back to about arm’s length.") and its tint fades slightly toward orange-red. The Monitor page's tip box does the same. It clears when fixed or after 30 s, then waits 5 minutes before nudging again.
 
 ## Parts of the code I wrote or substantially changed myself
 
