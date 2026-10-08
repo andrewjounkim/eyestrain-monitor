@@ -45,7 +45,39 @@ The full prompt history is in [prompt_log.md](prompt_log.md).
 
 ## AI-generated documentation
 
-*Everything below this line was written by Claude (Claude Code, Claude Opus 5.5) as a technical reference.*
+*Everything below this line was written by Claude (Claude Code, Claude Opus 5.5).*
+
+### Overview
+
+Eye Strain Monitor watches for signs of digital eye strain while you work, using only your webcam and a face-tracking model that runs entirely in the browser. It measures:
+- your blink rate;
+- whether each blink fully closes;
+- where you're looking;
+- roughly how far you sit from the screen.
+
+When habits slip (for example, blinking much less than a relaxed rate), it gives you a calm nudge. No video is ever uploaded or saved: only numbers such as blink counts are stored, in your own browser.
+
+### Using the app
+
+1. Open the site and click the eye (or **Begin**). The view zooms into the pupil and opens the app.
+2. On the **Monitor** page, click **Start monitoring** and allow camera access.
+3. Look at the screen and blink normally for about 25 seconds while it calibrates to your eyes.
+4. Watch your blink rate, full-blink percentage, distance and session time on the right. The tip box at the bottom tells you how you're doing.
+5. Optionally click **Pop-out widget** in the sidebar. It opens a small always-on-top window whose eye mirrors your blinks and gaze, with a soft background color: green when things are fine, warmer when you should act.
+6. Click **End session** for a summary with a per-minute chart. Sessions with at least a minute of data are saved to **History**, which charts your trend across sessions.
+7. **Tuning** shows the raw eye measurements for adjusting thresholds in `config.js`. **Diagnostics** shows whether detection keeps running while the window is hidden.
+
+Works best in Chrome or Edge on a computer with a webcam. It can also be installed as an app from Chrome's address bar.
+
+### Highlights
+
+- **Keeps working in the background.** Camera frames stream straight into a Web Worker, which runs the face model there. Browsers pause normal page animation loops when a window is hidden, but the worker keeps going: about 20 fps while hidden in testing, against 0 fps for the main-thread version. The Diagnostics page measures this live.
+- **A widget that mirrors you.** The floating window's eye blinks when you blink and follows your gaze.
+  - Its color changes only after a state lasts a few seconds, and fades slowly, so it isn't distracting.
+  - Nudges ("Blink a few times: slow, full blinks.") appear in the widget itself rather than as system notifications, which many people turn off.
+- **More than a blink counter.** It separates full blinks from incomplete ones and estimates screen distance from the size of your iris (about 11.7 mm for nearly all adults).
+- **History over time.** Each session's average blink rate is plotted with a 5-session moving average, and a headline says whether recent sessions are better or worse than earlier ones.
+- **Cinematic intro.** The eye draws itself, follows the cursor and blinks. Clicking it dives into the pupil, and it turns into a simple fade if your system asks for reduced motion.
 
 ### Run locally
 
