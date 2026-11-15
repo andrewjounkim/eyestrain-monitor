@@ -25,6 +25,11 @@ test('formatDuration at exactly one hour switches to the hour format (boundary)'
   assert.equal(formatDuration(3600), '1 h 0 min');
 });
 
+// Added after break-it #2 (3600 -> 3000) survived: no test sat just under the hour.
+test('formatDuration one second under an hour is still minutes and seconds (boundary)', () => {
+  assert.equal(formatDuration(3599), '59 min 59 s');
+});
+
 test('formatDuration of zero is "0 s"', () => {
   assert.equal(formatDuration(0), '0 s');
 });
