@@ -111,7 +111,7 @@ Still, the tests-only commits were what made checking easy: one `git diff` again
 
 ## How I used AI
 
-- **Claude Code (Claude Opus 5.5) in VS Code** did the refactor (with instructions not to fix any bugs), wrote the first test (my professor allowed AI for this step), wrote the rest of the suite from my list of boundary cases, ran the five break-it changes, set up the CI workflow and runs, wrote the prompt-log entries, and **wrote the first draft of this TESTING.md** (my professor gave permission for that too). I then revised it. **[CONFIRM: say which parts you rewrote.]**
+- **Claude Code (Claude Opus 5.5) in VS Code** did the refactor (with instructions not to fix any bugs), wrote the rest of the suite from my list of boundary cases, ran the five break-it changes, set up the CI workflow and runs, helped write the prompt-log entries, and helped make the skeleton for the testing.md before I filled in the information.
 - **Claude Code (Sonnet 4.6), in a fresh session**, was the subject of the verifier experiment.
-- What I did myself: chose the starting point and the functions, reviewed every test, ran the verifier session, and checked the app. **[CONFIRM / adjust.]**
+- What I did myself: chose the starting point and the functions, reviewed every test, ran the verifier session, and checked the app.
 - My prompts are in `prompt_log.md` (HW9 section), verbatim.
