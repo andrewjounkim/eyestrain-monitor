@@ -37,7 +37,7 @@ export function binMinutes(minutes) {
 
 export const fmtMinutes = (seconds) => {
   const m = Math.round(seconds / 60);
-  return m > 60 ? `${Math.floor(m / 60)} h ${m % 60} min` : `${m} min`;
+  return m >= 60 ? `${Math.floor(m / 60)} h ${m % 60} min` : `${m} min`;
 };
 export const mean = (values) => values.reduce((a, b) => a + b, 0) / values.length;
 
