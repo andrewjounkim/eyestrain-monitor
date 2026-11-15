@@ -247,3 +247,93 @@ I tuned blink detection and restyled the widget myself. In client/src/config.js 
 ## One place AI got it wrong
 
 After I reloaded the app it showed "Face model failed to load (… `vision_wasm_module_internal.js?retry`)". Claude had added a GPU→CPU fallback and was confident it worked. Its first version could not work inside the module Web Worker at all: MediaPipe loads its wasm loader with `import()`, which only runs a given URL once, so the CPU retry failed with "ModuleFactory not set". Claude only found that by forcing the GPU path to fail in a test. Its fix (re-importing the loader with a `?retry` query) then created the error I saw. That URL had never been cached, the local server had stopped, and the message hid the real GPU error. A similar thing happened with "Detection worker crashed". Claude kept rebuilding while my tab was open, and the service worker deleted the old build's worker file. The page then asked for a file that no longer existed and got HTML back, and module workers fail with no message in that case. In both cases the fix came from reproducing the exact situation in a test rather than guessing: serving the retry file from the cache, reporting both errors, and auto-reloading into a new version when the service worker updates. Another example: early on Claude reported the main-thread detector at 60 fps, but the camera only delivered 20. The rAF loop was analyzing the same frame three times. Measuring the camera's real frame rate exposed it.
+
+---
+
+# HW9: Tests as Guardrails (CMU 15-114)
+
+Started from my Project 2 (this repo). All HW9 work is on the `hw9-tests` branch; `main` and the GitHub Pages deployment stay exactly as graded for Project 2.
+
+## Tools
+
+- **Claude Code (Claude Opus 5.5), in the VS Code extension.** Used for the refactor, writing most of the tests, running the break-it changes, and setting up CI. Prompts below.
+
+Messages that only pasted the assignment page, asked what to do next, or said "commit" are not included.
+
+### HW9 Prompt 1: Refactor (no bug fixes)
+
+```
+I'm doing a testing assignment on this repo (my eye-strain monitor, a Vite app in client/). This step is a pure refactor. Do NOT fix any bugs you notice. Leave them exactly as they are and just list them for me at the end. Don't change any behavior, wording, or styling.
+
+1. Create and switch to a new branch called hw9-tests.
+
+2. Create client/src/stats-format.js. Move these pure helper functions into it unchanged (same logic, same names) and export them:
+   - from client/src/summary-view.js: formatDuration, binMinutes
+   - from client/src/history-view.js: fmtMinutes, mean, rollingAverage
+   Keep their dependencies working: binMinutes uses CONFIG, and rollingAverage uses the RECENT constant from history-view.js. Move RECENT into stats-format.js and export it, and import it back wherever history-view.js still needs it. The new file must not touch document, window, localStorage, or any DOM API.
+
+3. Update summary-view.js and history-view.js to import those functions from ./stats-format.js and delete the old copies. Don't change anything else in those files.
+
+4. Add a package.json at the repo ROOT (not in client/) containing exactly:
+   { "type": "module" }
+   First check that no file outside client/ uses require(). If one does, stop and tell me instead of adding it.
+
+5. Create an empty tests/ folder at the repo root with a .gitkeep in it. Do NOT write any tests. I'm writing the first one by hand.
+
+6. Verify:
+   - run `npm run build` inside client/ and confirm it succeeds
+   - from the repo root, run: node -e "import('./client/src/stats-format.js').then(m => console.log(Object.keys(m)))" and confirm it prints the exported names
+   - grep stats-format.js for document/window/localStorage and confirm there are none
+
+7. Commit with the message "Extract pure stats/format helpers into stats-format.js for testing".
+
+8. Show me the full git diff of the commit, and tell me which screens I should click through to check that nothing broke (the end-of-session Summary dialog and the History view).
+```
+
+**Result:** Commit `84db949`. Five functions plus `RECENT` moved into `client/src/stats-format.js` unchanged; no file outside `client/` used `require()`; build passed, the Node import printed all six names, no DOM references. Claude listed six bugs it noticed and did not fix: `mean([])` is `NaN`, the "5-session avg" tooltip is wrong for the first four sessions, "Trend appears after 6 sessions" should say "at", `fmtMinutes` shows "0 min" under 30 s, `formatDuration` drops seconds past an hour, and a minute with a rate of exactly 0 draws nothing in the Summary chart.
+
+### HW9 Prompt 2: First test
+
+```
+make the first test for me, professor says i am allowed to use ai now
+```
+
+**Result:** Three `formatDuration` tests in `tests/stats-format.test.js` (45 s, 2 min 5 s, 1 h 2 min). All passed; Claude then changed one expected value to make it fail on purpose (`actual: '45 s', expected: '46 s'`) and changed it back. The assignment says this test should be hand-written; my professor allowed AI for it.
+
+### HW9 Prompt 3: Build out the suite
+
+```
+go
+```
+
+(Reply to Claude's proposal to add tests for `fmtMinutes`, `mean`, `rollingAverage` and `binMinutes`, using boundary cases: `mean([])`, `fmtMinutes(20)` and `fmtMinutes(3570)`, the 20 s vs 19 s face-time cutoff in `binMinutes`, and the shorter window at the start of `rollingAverage`.)
+
+**Result:** 25 tests across all five functions, committed alone as `b67b8cf`. Three tests lock in current buggy behavior (labeled "documents current behavior") instead of fixing the code.
+
+### HW9 Prompt 4: Break it on purpose
+
+```
+go
+```
+
+(Reply to Claude's list of five one-line breaks.)
+
+**Result:** Four of five breaks were caught. `formatDuration` dividing by 3000 instead of 3600 broke nothing, because no test used a value between 3000 and 3599 s. Added a `formatDuration(3599)` test, which now catches it; committed alone as `8f7f8f1`.
+
+### HW9 Prompt 5: CI
+
+```
+go
+```
+
+(Reply to Claude's plan to add `.github/workflows/tests.yml`, push `hw9-tests`, push one broken commit for a red run, and revert it.)
+
+**Result:** The first push was rejected because my GitHub login lacked the `workflow` permission; I approved it with `gh auth refresh -s workflow`. Green run on `1ac8267`, red run on `4db2203` (deliberate `fmtMinutes` break), green again on the revert `23a1666`.
+
+### HW9 Prompt 6
+
+```
+do all that except the ones i need to do on my own
+```
+
+**Result:** Claude added this HW9 section to the prompt log and pushed the commit for the verifier experiment.
