@@ -2,6 +2,7 @@
 // a column chart of blinks per minute over the session (plain SVG, no library).
 
 import { CONFIG } from './config.js';
+import { formatDuration, binMinutes } from './stats-format.js';
 
 const RATINGS = {
   good: { icon: '✓', label: 'Healthy blink rate', tip: 'Your eyes were getting regular blinks. Keep it up.' },
@@ -22,36 +23,7 @@ const RATINGS = {
   },
 };
 
-function formatDuration(seconds) {
-  const s = Math.round(seconds);
-  const h = Math.floor(s / 3600);
-  const m = Math.floor((s % 3600) / 60);
-  if (h) return `${h} h ${m} min`;
-  if (m) return `${m} min ${s % 60} s`;
-  return `${s} s`;
-}
-
 const time = (epochMs) => new Date(epochMs).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-
-// Group minutes into bins so long sessions still have readable columns
-// (at most ~40 columns). Each bin gets a rate only if the face was visible long enough.
-function binMinutes(minutes) {
-  const size = Math.max(1, Math.ceil(minutes.length / 40));
-  const bins = [];
-  for (let i = 0; i < minutes.length; i += size) {
-    const group = minutes.slice(i, i + size);
-    const blinks = group.reduce((sum, m) => sum + m.blinks, 0);
-    const faceSeconds = group.reduce((sum, m) => sum + m.faceSeconds, 0);
-    bins.push({
-      from: i + 1,
-      to: i + group.length,
-      blinks,
-      faceSeconds,
-      rate: faceSeconds >= CONFIG.SUMMARY_MIN_FACE_SECONDS * group.length ? blinks / (faceSeconds / 60) : null,
-    });
-  }
-  return bins;
-}
 
 const binLabel = (b) => (b.from === b.to ? `Minute ${b.from}` : `Minutes ${b.from}–${b.to}`);
 

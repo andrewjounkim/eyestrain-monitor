@@ -3,24 +3,11 @@
 
 import { CONFIG } from './config.js';
 import { loadSessions, deleteSession, clearSessions } from './history.js';
-
-// How many recent sessions make up "recent average" and the trend line.
-const RECENT = 5;
+import { RECENT, fmtMinutes, mean, rollingAverage } from './stats-format.js';
 
 const fmtDate = (ms) => new Date(ms).toLocaleDateString([], { month: 'short', day: 'numeric' });
 const fmtDateTime = (ms) =>
   new Date(ms).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
-const fmtMinutes = (seconds) => {
-  const m = Math.round(seconds / 60);
-  return m >= 60 ? `${Math.floor(m / 60)} h ${m % 60} min` : `${m} min`;
-};
-const mean = (values) => values.reduce((a, b) => a + b, 0) / values.length;
-
-// Average of each session and up to RECENT-1 sessions before it: smooths out
-// one-off good or bad days so the direction of change is visible.
-function rollingAverage(rates) {
-  return rates.map((_, i) => mean(rates.slice(Math.max(0, i - RECENT + 1), i + 1)));
-}
 
 function renderTiles(els, sessions) {
   const rates = sessions.map((s) => s.blinksPerMinute);
