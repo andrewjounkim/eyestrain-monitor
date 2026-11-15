@@ -11,7 +11,7 @@ export function formatDuration(seconds) {
   const h = Math.floor(s / 3600);
   const m = Math.floor((s % 3600) / 60);
   if (h) return `${h} h ${m} min`;
-  if (m) return `${m} min ${seconds % 60} s`;
+  if (m) return `${m} min ${s % 60} s`;
   return `${s} s`;
 }
 
