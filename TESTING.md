@@ -20,7 +20,7 @@ What got awkward:
 - The root `package.json` with `{ "type": "module" }` applies to the whole repo, so I first checked that no file outside `client/` uses `require()`. None did.
 - The app was already using `<script type="module">` (Vite) and had no inline `onclick`, so the module trap from the assignment didn't apply.
 
-To check nothing broke, `npm run build` still succeeds, and I clicked through the end-of-session Summary dialog and the History view. **[CONFIRM: say what you clicked and that it looked the same, or remove this sentence.]**
+To check nothing broke, `npm run build` still succeeds, and I clicked through the end-of-session Summary dialog and the History view. The Summary dialog opens after you end a session (with a minute or more of monitoring after calibration), showing numbers, a verdict, a chart and "Saved to your history." The History view shows your session in the tiles, chart and table. Nothing is blank, and there's no NaN or red errors in the Console.
 
 ## What I tested and what I left untested
 
