@@ -292,15 +292,7 @@ I'm doing a testing assignment on this repo (my eye-strain monitor, a Vite app i
 
 **Result:** Commit `84db949`. Five functions plus `RECENT` moved into `client/src/stats-format.js` unchanged; no file outside `client/` used `require()`; build passed, the Node import printed all six names, no DOM references. Claude listed six bugs it noticed and did not fix: `mean([])` is `NaN`, the "5-session avg" tooltip is wrong for the first four sessions, "Trend appears after 6 sessions" should say "at", `fmtMinutes` shows "0 min" under 30 s, `formatDuration` drops seconds past an hour, and a minute with a rate of exactly 0 draws nothing in the Summary chart.
 
-### HW9 Prompt 2: First test
-
-```
-make the first test for me, professor says i am allowed to use ai now
-```
-
-**Result:** Three `formatDuration` tests in `tests/stats-format.test.js` (45 s, 2 min 5 s, 1 h 2 min). All passed; Claude then changed one expected value to make it fail on purpose (`actual: '45 s', expected: '46 s'`) and changed it back. The assignment says this test should be hand-written; my professor allowed AI for it.
-
-### HW9 Prompt 3: Build out the suite
+### HW9 Prompt 2: Build out the suite
 
 ```
 go
@@ -310,7 +302,7 @@ go
 
 **Result:** 25 tests across all five functions, committed alone as `b67b8cf`. Three tests lock in current buggy behavior (labeled "documents current behavior") instead of fixing the code.
 
-### HW9 Prompt 4: Break it on purpose
+### HW9 Prompt 3: Break it on purpose
 
 ```
 go
@@ -320,7 +312,7 @@ go
 
 **Result:** Four of five breaks were caught. `formatDuration` dividing by 3000 instead of 3600 broke nothing, because no test used a value between 3000 and 3599 s. Added a `formatDuration(3599)` test, which now catches it; committed alone as `8f7f8f1`.
 
-### HW9 Prompt 5: CI
+### HW9 Prompt 4: CI
 
 ```
 go
@@ -330,7 +322,7 @@ go
 
 **Result:** The first push was rejected because my GitHub login lacked the `workflow` permission; I approved it with `gh auth refresh -s workflow`. Green run on `1ac8267`, red run on `4db2203` (deliberate `fmtMinutes` break), green again on the revert `23a1666`.
 
-### HW9 Prompt 6
+### HW9 Prompt 5
 
 ```
 do all that except the ones i need to do on my own
@@ -338,7 +330,7 @@ do all that except the ones i need to do on my own
 
 **Result:** Claude added this HW9 section to the prompt log.
 
-### HW9 Prompt 7: Verifier experiment (separate fresh session)
+### HW9 Prompt 6: Verifier experiment (separate fresh session)
 
 Tool and model: a brand-new Claude Code session (v2.1.109, **Sonnet 4.6**), opened in `~/eyestrain-monitor`, starting at commit `18ea540`. That commit has one failing test, caused by a deliberate bug in `formatDuration` (commit `8ee7ae5`: `s % 60` changed to `seconds % 60`).
 
